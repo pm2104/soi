@@ -64,4 +64,4 @@ npx firebase-tools deploy --only hosting --project project-6b0af032-2d30-40c5-be
 - The workflow uses `google-github-actions/auth@v2` with Workload Identity
   Federation, then `firebase-tools`, which picks up the resulting
   Application Default Credentials automatically — no `FIREBASE_TOKEN` or
-  key file needed.
+  key file needed. 
