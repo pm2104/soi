@@ -35,4 +35,4 @@ jobs:
           service_account: 'soi-471@project-6b0af032-2d30-40c5-be5.iam.gserviceaccount.com'
 
       - name: Deploy to Firebase Hosting
-        run: npx firebase-tools deploy --only hosting --project soiglobal-b8f8c --non-interactive
+        run: npx firebase-tools@15.22.1 deploy --only hosting --project soiglobal-b8f8c --non-interactive
