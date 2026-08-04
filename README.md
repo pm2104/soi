@@ -1,7 +1,8 @@
 # Supervisors On India — Under Construction
 
 Placeholder "launching soon" site for **soiglobal.in**, built with Next.js
-(App Router) and ready to deploy to **Google Cloud Run**.
+(App Router) as a static export, deployed to **Firebase Hosting** via
+GitHub Actions.
 
 ## Run locally
 
@@ -12,48 +13,55 @@ npm run dev
 
 Open http://localhost:3000
 
-## Build & run the container locally (optional sanity check)
+## Build & preview the static export (optional sanity check)
 
 ```bash
-docker build -t soi-under-construction .
-docker run -p 8080:8080 soi-under-construction
+npm run build   # writes the static site to ./out
+npm start        # serves ./out locally via `serve`
 ```
 
-Open http://localhost:8080
+## Deploy
 
-## Deploy to Cloud Run
+Deployment is automated by `.github/workflows/deploy.yml`: every push to
+`main` builds the static export and deploys it to Firebase Hosting using
+Workload Identity Federation (no service-account JSON key stored in the
+repo).
 
-From the project root, with the [gcloud CLI](https://cloud.google.com/sdk)
-installed and authenticated:
+To deploy manually instead:
 
 ```bash
-gcloud run deploy soi-under-construction \
-  --source . \
-  --region asia-south1 \
-  --allow-unauthenticated
+npm run build
+npx firebase-tools deploy --only hosting --project project-6b0af032-2d30-40c5-be5
 ```
 
-`--source .` builds the Dockerfile in this repo using Cloud Build, pushes
-the image, and deploys it — no separate `docker push` step needed. Pick
-whichever `--region` is closest to your users (`asia-south1` = Mumbai).
+### One-time setup checklist
 
-Once it's live, Cloud Run gives you a `*.run.app` URL. To serve it from
-**soiglobal.in**:
-
-1. In Cloud Run, go to the service → **Manage custom domains** → **Add
-   mapping**, and map `soiglobal.in` (and `www.soiglobal.in` if wanted) to
-   this service.
-2. Add the DNS records Cloud Run gives you (usually an `A`/`AAAA` or
-   `CNAME` pair) at your domain registrar for `soiglobal.in`.
-3. Wait for DNS propagation and certificate provisioning (can take up to a
-   few hours).
+- [ ] Confirm the Firebase **project ID** in `.firebaserc` and in
+      `.github/workflows/deploy.yml` matches your actual project (it's
+      currently set to `project-6b0af032-2d30-40c5-be5`, inferred from the
+      service account email — double-check this in the Firebase console).
+- [ ] Grant the deploy service account
+      (`soi-471@project-6b0af032-2d30-40c5-be5.iam.gserviceaccount.com`)
+      the **Firebase Hosting Admin** role (`roles/firebasehosting.admin`)
+      on the project, so the workflow is allowed to publish.
+- [ ] Confirm the Workload Identity Pool/provider
+      (`github-pool` / `github-provider`) has an attribute condition
+      restricting it to this GitHub repo (e.g. `assertion.repository ==
+      'your-org/your-repo'`), so only this repo can mint tokens for that
+      service account.
+- [ ] Once mapped, add `soiglobal.in` as a **custom domain** in Firebase
+      Hosting (Hosting → Add custom domain) and update the DNS records at
+      your registrar as instructed there.
 
 ## Notes
 
-- The app listens on the port Cloud Run provides via the `PORT` env var
-  (defaults to `8080`) — no changes needed.
-- `next.config.mjs` uses `output: "standalone"` so the Docker image only
-  ships the minimal server + required files, keeping the image small and
-  the cold start fast.
-- To replace this page later with the full site, just build out more
-  routes under `app/` — the Docker/Cloud Run setup won't need to change.
+- `next.config.mjs` uses `output: "export"` — this only works because the
+  site is fully static (no server components with dynamic data, no API
+  routes). If you later need server-rendering, dynamic routes, or an API,
+  you'll need either Firebase's Next.js framework integration (which
+  deploys Cloud Functions/Cloud Run under the hood) or to go back to the
+  Cloud Run + Docker setup this project started with.
+- The workflow uses `google-github-actions/auth@v2` with Workload Identity
+  Federation, then `firebase-tools`, which picks up the resulting
+  Application Default Credentials automatically — no `FIREBASE_TOKEN` or
+  key file needed.

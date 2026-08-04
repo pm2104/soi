@@ -1,0 +1,38 @@
+name: Deploy to Firebase Hosting
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # required for Workload Identity Federation
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (Next.js static export)
+        run: npm run build
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/683150028757/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+          service_account: 'soi-471@project-6b0af032-2d30-40c5-be5.iam.gserviceaccount.com'
+
+      - name: Deploy to Firebase Hosting
+        run: npx firebase-tools deploy --only hosting --project project-6b0af032-2d30-40c5-be5 --non-interactive
