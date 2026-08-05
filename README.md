@@ -23,35 +23,37 @@ npm start        # serves ./out locally via `serve`
 ## Deploy
 
 Deployment is automated by `.github/workflows/deploy.yml`: every push to
-`main` builds the static export and deploys it to Firebase Hosting using
-Workload Identity Federation (no service-account JSON key stored in the
-repo).
+`main` builds the static export, then authenticates to Google Cloud using
+a **service account JSON key** stored as a GitHub secret, and deploys to
+Firebase Hosting.
 
-To deploy manually instead:
+To deploy manually instead (needs `gcloud`/`firebase` auth set up locally):
 
 ```bash
 npm run build
-npx firebase-tools deploy --only hosting --project project-6b0af032-2d30-40c5-be5
+npx firebase-tools deploy --only hosting --project soiglobalone-1c2c7
 ```
 
 ### One-time setup checklist
 
+- [ ] Create a service account in the `soiglobalone-1c2c7` project
+      (IAM & Admin → Service Accounts → Create Service Account) and grant
+      it the **Firebase Admin** and **Firebase Hosting Admin** roles.
+- [ ] Generate a JSON key for that service account (Keys tab → Add Key →
+      Create new key → JSON).
+- [ ] Add the entire JSON file contents as a GitHub repo secret named
+      `FIREBASE_SERVICE_ACCOUNT` (Settings → Secrets and variables →
+      Actions → New repository secret). **Never commit this file or paste
+      it anywhere other than the GitHub secret field** — delete the
+      downloaded copy once it's saved as a secret.
 - [ ] Confirm the Firebase **project ID** in `.firebaserc` and in
-      `.github/workflows/deploy.yml` matches your actual project (it's
-      currently set to `project-6b0af032-2d30-40c5-be5`, inferred from the
-      service account email — double-check this in the Firebase console).
-- [ ] Grant the deploy service account
-      (`soi-471@project-6b0af032-2d30-40c5-be5.iam.gserviceaccount.com`)
-      the **Firebase Hosting Admin** role (`roles/firebasehosting.admin`)
-      on the project, so the workflow is allowed to publish.
-- [ ] Confirm the Workload Identity Pool/provider
-      (`github-pool` / `github-provider`) has an attribute condition
-      restricting it to this GitHub repo (e.g. `assertion.repository ==
-      'your-org/your-repo'`), so only this repo can mint tokens for that
-      service account.
-- [ ] Once mapped, add `soiglobal.in` as a **custom domain** in Firebase
-      Hosting (Hosting → Add custom domain) and update the DNS records at
-      your registrar as instructed there.
+      `.github/workflows/deploy.yml` matches your actual project
+      (currently `soiglobalone-1c2c7`).
+- [ ] Confirm Hosting is initialized for the project (Firebase console →
+      Hosting → Get started, if you haven't already).
+- [ ] Once deploying successfully, add `soiglobal.in` as a **custom
+      domain** in Firebase Hosting (Hosting → Add custom domain) and
+      update the DNS records at your registrar as instructed there.
 
 ## Notes
 
@@ -61,7 +63,10 @@ npx firebase-tools deploy --only hosting --project project-6b0af032-2d30-40c5-be
   you'll need either Firebase's Next.js framework integration (which
   deploys Cloud Functions/Cloud Run under the hood) or to go back to the
   Cloud Run + Docker setup this project started with.
-- The workflow uses `google-github-actions/auth@v2` with Workload Identity
-  Federation, then `firebase-tools`, which picks up the resulting
-  Application Default Credentials automatically — no `FIREBASE_TOKEN` or
-  key file needed. 
+- We use a service account key rather than Workload Identity Federation
+  because `firebase-tools` currently has an open bug
+  (firebase/firebase-tools#10726) where it fails to recognize WIF-issued
+  credentials for its own project lookups, even though the same
+  credentials work fine for other Google Cloud APIs. Worth revisiting WIF
+  once that's fixed upstream, since key-based auth is long-lived and
+  should be rotated periodically.
