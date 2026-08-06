@@ -1,11 +1,13 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion, HTMLMotionProps } from "framer-motion";
 import { Loader2 } from "lucide-react";
-import { ButtonHTMLAttributes, forwardRef } from "react";
+import { forwardRef } from "react";
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps
+  extends Omit<HTMLMotionProps<"button">, "ref" | "children"> {
+  children?: React.ReactNode;
   variant?: "primary" | "secondary" | "outline" | "ghost";
   size?: "sm" | "md" | "lg";
   isLoading?: boolean;
@@ -33,7 +35,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         "bg-white text-navy hover:bg-light-gray shadow-soft border border-border",
       outline:
         "bg-transparent text-white border-2 border-white/30 hover:bg-white/10",
-      ghost: "bg-transparent text-text hover:bg-light-gray",
+      ghost:
+        "bg-transparent text-text hover:bg-light-gray",
     };
 
     const sizes = {
