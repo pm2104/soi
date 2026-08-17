@@ -79,9 +79,6 @@ export default function LaunchSection() {
                 <span className="text-3xl md:text-4xl font-extrabold text-accent">
                   {stat.value}
                 </span>
-                <span className="text-2xl md:text-3xl font-extrabold text-accent">
-                  {stat.suffix}
-                </span>
               </div>
               <p className="text-sm text-white/60">{stat.label}</p>
             </div>
