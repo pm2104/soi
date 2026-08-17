@@ -16,7 +16,7 @@ export default function HeroBanner() {
         >
           <div className="aspect-[21/9] md:aspect-[21/7] relative bg-gradient-to-r from-navy-600 via-navy-400 to-accent/30">
             <Image
-              src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1400&q=80"
+              src="https://res.cloudinary.com/qii92ztd/image/upload/v1786942606/file_000000002058720688cf7bdd4213f595.png?auto=format&fit=crop&w=1400&q=80"
               alt="Construction site overview"
               fill
               className="object-cover opacity-60"
@@ -34,10 +34,6 @@ export default function HeroBanner() {
                   </h3>
                 </div>
                 <div className="flex gap-6">
-                  <div className="text-center">
-                    <p className="text-2xl md:text-3xl font-extrabold text-accent">5000+</p>
-                    <p className="text-xs text-white/60">Professionals</p>
-                  </div>
                   <div className="text-center">
                     <p className="text-2xl md:text-3xl font-extrabold text-accent">28+</p>
                     <p className="text-xs text-white/60">States</p>

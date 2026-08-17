@@ -10,7 +10,7 @@ const config: Config = {
     extend: {
       colors: {
         navy: {
-          DEFAULT: "#13254B",
+          DEFAULT: "#0D1B3E",
           50: "#E8EDF5",
           100: "#D1DBEB",
           200: "#A3B7D7",
@@ -49,9 +49,9 @@ const config: Config = {
         "3xl": "24px",
       },
       boxShadow: {
-        soft: "0 4px 20px rgba(19, 37, 75, 0.08)",
-        card: "0 8px 30px rgba(19, 37, 75, 0.12)",
-        hover: "0 12px 40px rgba(19, 37, 75, 0.16)",
+        soft: "0 4px 20px rgba(13, 27, 62, 0.08)",
+        card: "0 8px 30px rgba(13, 27, 62, 0.12)",
+        hover: "0 12px 40px rgba(13, 27, 62, 0.16)",
       },
       animation: {
         float: "float 6s ease-in-out infinite",

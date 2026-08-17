@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, HardHat } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import Image from "next/image";
 import { NAV_LINKS } from "@/lib/constants";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
@@ -16,10 +17,16 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3">
-            <div className="bg-navy p-2 rounded-xl">
-              <HardHat className="h-6 w-6 text-accent" />
+            <div className="flex items-center justify-center">
+              <Image
+                src="https://res.cloudinary.com/qii92ztd/image/upload/v1786942606/file_000000002058720688cf7bdd4213f595.png"
+                alt="Supervisors of India"
+                width={56}
+                height={56}
+                className="h-12 w-12 object-contain"
+              />
             </div>
-            <div className="hidden sm:block">
+            <div className="block">
               <h1 className="text-lg font-extrabold text-navy leading-tight">
                 SUPERVISORS OF INDIA
               </h1>

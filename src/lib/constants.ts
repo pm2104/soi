@@ -1,8 +1,8 @@
 export const NAV_LINKS = [
   { label: "Home", href: "#" },
-  { label: "Professionals", href: "#professionals" },
+  { label: "About Us", href: "#about" },
   { label: "How It Works", href: "#how-it-works" },
-  { label: "Membership", href: "#membership" },
+  { label: "Find Professionals", href: "#hire-Professionals" },
   { label: "Contact", href: "#contact" },
 ];
 
@@ -170,10 +170,10 @@ export const FEATURES = [
 ];
 
 export const STATS = [
-  { value: "28", suffix: "+", label: "States Covered" },
-  { value: "20", suffix: "+", label: "Professions" },
-  { value: "5000", suffix: "+", label: "Verified Professionals" },
-  { value: "1000", suffix: "+", label: "Projects Completed" },
+  { value: "Pan-India", label: "All 28 states & UTs covered from day one." },
+  { value: "20+ Professions", label: "Supervisors, Engineers, Architects, PMs & more." },
+  { value: "Verified Only", label: "Every profile reviewed before going live." },
+  // { value: "1000", suffix: "+", label: "Projects Completed" },
 ];
 
 export const FOOTER_LINKS = {
@@ -184,6 +184,7 @@ export const FOOTER_LINKS = {
     { label: "Press", href: "#" },
   ],
   platform: [
+    { label: "Home", href: "#" },
     { label: "How It Works", href: "#how-it-works" },
     { label: "Pricing", href: "#membership" },
     { label: "Professionals", href: "#professionals" },
@@ -194,6 +195,7 @@ export const FOOTER_LINKS = {
     { label: "Terms of Service", href: "#" },
     { label: "Cookie Policy", href: "#" },
     { label: "Disclaimer", href: "#" },
+    { label: "Refund & Cancellation", href: "#" },
   ],
   social: [
     { label: "LinkedIn", href: "#" },

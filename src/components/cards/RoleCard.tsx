@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Building2, HardHat, ArrowRight, Check } from "lucide-react";
 import Button from "@/components/ui/Button";
+import JoinAsProfessionalButton from "@/components/auth/JoinAsProfessionalButton";
 import { cn } from "@/lib/utils";
 
 interface RoleCardProps {
@@ -113,14 +114,19 @@ export default function RoleCard({ type, index }: RoleCardProps) {
         ))}
       </ul>
 
-      <Button
-        variant={type === "client" ? "primary" : "secondary"}
-        fullWidth
-        className="group"
-      >
-        {data.cta}
-        <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-      </Button>
+      {type === "client" ? (
+        <Button variant="primary" fullWidth className="group">
+          {data.cta}
+          <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+        </Button>
+      ) : (
+        <JoinAsProfessionalButton
+          variant="secondary"
+          fullWidth
+          showArrow
+          className="border-navy/10"
+        />
+      )}
     </motion.div>
   );
 }

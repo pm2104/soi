@@ -68,7 +68,7 @@ export default function LaunchSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12"
+          className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-12"
         >
           {STATS.map((stat, index) => (
             <div
@@ -103,11 +103,10 @@ export default function LaunchSection() {
             </span>
           </div>
           <h3 className="text-2xl md:text-3xl font-extrabold text-white mb-2">
-            Early Bird Special
+             Early Bird Offer — Free 6-Month Priority Listing
           </h3>
           <p className="text-white/90 max-w-xl mx-auto">
-            Register in the first 30 days and get lifetime free access to all premium features.
-            No hidden fees, no subscription required.
+            The first 100 professionals in each profession category per state get 2 months of free Premium membership — automatically on registration. No payment needed.
           </p>
         </motion.div>
       </div>
