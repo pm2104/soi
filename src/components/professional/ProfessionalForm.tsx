@@ -1,69 +1,102 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import {
   Loader2,
-  Plus,
+  Upload,
+  Trash2,
   X,
   Check,
   ChevronRight,
   AlertCircle,
-  Upload,
-  Trash2,
-  Image as ImageIcon,
   User,
 } from "lucide-react";
 import Image from "next/image";
+
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import Button from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+const ACCEPTED_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+];
+
+const CLOUDINARY_CLOUD_NAME =
+  process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+
+const CLOUDINARY_UPLOAD_PRESET =
+  process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+/* ─────────────────────────────────────────────
+   FORM SCHEMA
+───────────────────────────────────────────── */
 
 const onboardingSchema = z.object({
   displayName: z.string().min(2, "Full name is required"),
+
   email: z.string().email("Invalid email"),
+
   phone: z.string().min(10, "Valid phone number is required"),
+
   city: z.string().min(2, "City is required"),
+
   professionalType: z
     .string()
     .min(1, "Professional type is required"),
+
   specialization: z
     .string()
     .min(1, "Specialization is required"),
+
   experienceYears: z.coerce
     .number()
     .min(0, "Experience must be 0 or more")
     .max(60, "Experience must be realistic"),
+
   organization: z.string().optional(),
+
   qualifications: z
     .array(z.string())
     .min(1, "At least one qualification is required"),
+
   certifications: z.array(z.string()).optional(),
+
   areasOfExpertise: z.array(z.string()).optional(),
+
   bio: z
     .string()
     .min(50, "Bio must be at least 50 characters")
     .max(1000, "Bio must be under 1000 characters"),
+
   linkedinUrl: z
     .string()
     .url("Must be a valid URL")
     .or(z.literal("")),
+
   portfolioUrl: z
     .string()
     .url("Must be a valid URL")
     .or(z.literal("")),
 });
 
-type OnboardingFormData = z.infer<typeof onboardingSchema>;
+type OnboardingFormData = z.infer<
+  typeof onboardingSchema
+>;
+
+/* ─────────────────────────────────────────────
+   PROFESSIONAL TYPES
+───────────────────────────────────────────── */
 
 const PROFESSIONAL_TYPES = [
   "Site Supervisor",
@@ -87,6 +120,7 @@ const SPECIALIZATIONS: Record<string, string[]> = {
     "Infrastructure",
     "Renovation",
   ],
+
   "Civil Engineer": [
     "Structural",
     "Geotechnical",
@@ -94,6 +128,7 @@ const SPECIALIZATIONS: Record<string, string[]> = {
     "Water Resources",
     "Environmental",
   ],
+
   Architect: [
     "Residential",
     "Commercial",
@@ -101,6 +136,7 @@ const SPECIALIZATIONS: Record<string, string[]> = {
     "Sustainable",
     "Urban",
   ],
+
   "Interior Designer": [
     "Residential",
     "Commercial",
@@ -108,18 +144,21 @@ const SPECIALIZATIONS: Record<string, string[]> = {
     "Retail",
     "Corporate",
   ],
+
   "Project Manager": [
     "Construction",
     "Infrastructure",
     "Real Estate",
     "Renovation",
   ],
+
   "Quantity Surveyor": [
     "Cost Estimation",
     "Contract Management",
     "Procurement",
     "Valuation",
   ],
+
   "MEP Engineer": [
     "Mechanical",
     "Electrical",
@@ -127,6 +166,7 @@ const SPECIALIZATIONS: Record<string, string[]> = {
     "HVAC",
     "Fire Protection",
   ],
+
   Consultant: [
     "Structural",
     "Project Management",
@@ -134,6 +174,7 @@ const SPECIALIZATIONS: Record<string, string[]> = {
     "Legal",
     "Safety",
   ],
+
   "3D Visualizer": [
     "Architectural",
     "Interior",
@@ -141,6 +182,7 @@ const SPECIALIZATIONS: Record<string, string[]> = {
     "Animation",
     "VR/AR",
   ],
+
   "Structural Engineer": [
     "Concrete",
     "Steel",
@@ -148,8 +190,13 @@ const SPECIALIZATIONS: Record<string, string[]> = {
     "Masonry",
     "Seismic",
   ],
+
   Other: ["General"],
 };
+
+/* ─────────────────────────────────────────────
+   TAG INPUT
+───────────────────────────────────────────── */
 
 interface TagInputProps {
   label: React.ReactNode;
@@ -187,7 +234,10 @@ function TagInput({
       e.preventDefault();
       addTag(input);
       setInput("");
-    } else if (e.key === "," || e.key === "Tab") {
+    } else if (
+      e.key === "," ||
+      e.key === "Tab"
+    ) {
       e.preventDefault();
       addTag(input);
       setInput("");
@@ -217,7 +267,9 @@ function TagInput({
       .split(/[,\n]/)
       .map((s) => s.trim())
       .filter(
-        (s) => s.length > 0 && !tags.includes(s)
+        (s) =>
+          s.length > 0 &&
+          !tags.includes(s)
       );
 
     if (pasted.length > 0) {
@@ -259,12 +311,16 @@ function TagInput({
         <input
           type="text"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) =>
+            setInput(e.target.value)
+          }
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
           onPaste={handlePaste}
           placeholder={
-            tags.length === 0 ? placeholder : ""
+            tags.length === 0
+              ? placeholder
+              : ""
           }
           className="flex-1 min-w-[140px] bg-transparent text-sm outline-none placeholder:text-secondary-text/50 py-1"
         />
@@ -283,7 +339,7 @@ function TagInput({
         <kbd className="px-1.5 py-0.5 bg-light-gray rounded text-[10px] font-mono">
           Tab
         </kbd>
-        , or click away to add. Paste multiple with commas.
+        , or click away to add.
       </p>
 
       {error && (
@@ -295,7 +351,9 @@ function TagInput({
   );
 }
 
-/* ─── Cloudinary Image Upload Component ─── */
+/* ─────────────────────────────────────────────
+   CLOUDINARY UPLOAD
+───────────────────────────────────────────── */
 
 interface ImageUploadProps {
   label: string;
@@ -314,9 +372,14 @@ function ImageUpload({
   folder,
   uid,
 }: ImageUploadProps) {
-  const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] =
+    useState(false);
+
+  const [progress, setProgress] =
+    useState(0);
+
+  const inputRef =
+    useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (
     e: React.ChangeEvent<HTMLInputElement>
@@ -327,12 +390,25 @@ function ImageUpload({
       return;
     }
 
-    const remainingSlots = maxFiles - images.length;
+    if (
+      !CLOUDINARY_CLOUD_NAME ||
+      !CLOUDINARY_UPLOAD_PRESET
+    ) {
+      alert(
+        "Cloudinary configuration is missing. Please check your environment variables."
+      );
 
-    const filesToUpload = Array.from(files).slice(
-      0,
-      remainingSlots
-    );
+      return;
+    }
+
+    const remainingSlots =
+      maxFiles - images.length;
+
+    const filesToUpload =
+      Array.from(files).slice(
+        0,
+        remainingSlots
+      );
 
     if (filesToUpload.length === 0) {
       alert(
@@ -340,6 +416,7 @@ function ImageUpload({
           maxFiles > 1 ? "s" : ""
         } allowed.`
       );
+
       return;
     }
 
@@ -348,15 +425,28 @@ function ImageUpload({
 
     const uploadedUrls: string[] = [];
 
-    for (let i = 0; i < filesToUpload.length; i++) {
-      const file = filesToUpload[i];
+    for (
+      let i = 0;
+      i < filesToUpload.length;
+      i++
+    ) {
+      const file =
+        filesToUpload[i];
 
-      if (file.size > MAX_FILE_SIZE) {
-        alert(`${file.name} is too large. Max 5MB.`);
+      if (
+        file.size > MAX_FILE_SIZE
+      ) {
+        alert(
+          `${file.name} is too large. Maximum size is 5MB.`
+        );
         continue;
       }
 
-      if (!ACCEPTED_TYPES.includes(file.type)) {
+      if (
+        !ACCEPTED_TYPES.includes(
+          file.type
+        )
+      ) {
         alert(
           `${file.name} is not a valid image. Use JPG, PNG, or WebP.`
         );
@@ -364,41 +454,78 @@ function ImageUpload({
       }
 
       try {
-        const formData = new FormData();
+        const formData =
+          new FormData();
 
-        formData.append("file", file);
-        formData.append("folder", folder);
-        formData.append("uid", uid);
+        formData.append(
+          "file",
+          file
+        );
 
-        const response = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
+        /*
+         * Cloudinary folder structure:
+         *
+         * supervisors-of-india/
+         *   profile/
+         *   portfolio/
+         *
+         * The preset's Asset folder is:
+         * supervisors-of-india
+         */
+        const uploadFolder =
+          `supervisors-of-india/${folder}/${uid}`;
 
-        const result = await response.json();
+        formData.append(
+          "upload_preset",
+          CLOUDINARY_UPLOAD_PRESET
+        );
+
+        formData.append(
+          "folder",
+          uploadFolder
+        );
+
+        const response =
+          await fetch(
+            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+            {
+              method: "POST",
+              body: formData,
+            }
+          );
+
+        const result =
+          await response.json();
 
         if (!response.ok) {
           throw new Error(
-            result.error || "Upload failed"
+            result?.error?.message ||
+              "Cloudinary upload failed"
           );
         }
 
-        if (!result.url) {
+        if (!result.secure_url) {
           throw new Error(
-            "Cloudinary did not return an image URL"
+            "Cloudinary did not return an image URL."
           );
         }
 
-        uploadedUrls.push(result.url);
+        uploadedUrls.push(
+          result.secure_url
+        );
 
         const percent =
-          ((i + 1) / filesToUpload.length) * 100;
+          ((i + 1) /
+            filesToUpload.length) *
+          100;
 
-        setProgress(Math.round(percent));
-      } catch (err) {
+        setProgress(
+          Math.round(percent)
+        );
+      } catch (error) {
         console.error(
           "Cloudinary upload error:",
-          err
+          error
         );
 
         alert(
@@ -407,8 +534,13 @@ function ImageUpload({
       }
     }
 
-    if (uploadedUrls.length > 0) {
-      onChange([...images, ...uploadedUrls]);
+    if (
+      uploadedUrls.length > 0
+    ) {
+      onChange([
+        ...images,
+        ...uploadedUrls,
+      ]);
     }
 
     setUploading(false);
@@ -419,9 +551,13 @@ function ImageUpload({
     }
   };
 
-  const removeImage = (url: string) => {
+  const removeImage = (
+    url: string
+  ) => {
     onChange(
-      images.filter((img) => img !== url)
+      images.filter(
+        (img) => img !== url
+      )
     );
   };
 
@@ -433,7 +569,6 @@ function ImageUpload({
         </label>
       )}
 
-      {/* Image previews */}
       {images.length > 0 && (
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-3">
           {images.map((url) => (
@@ -451,7 +586,9 @@ function ImageUpload({
 
               <button
                 type="button"
-                onClick={() => removeImage(url)}
+                onClick={() =>
+                  removeImage(url)
+                }
                 className="absolute top-1.5 right-1.5 p-1.5 bg-red-500 text-white rounded-xl opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
               >
                 <Trash2 className="h-3 w-3" />
@@ -461,15 +598,19 @@ function ImageUpload({
         </div>
       )}
 
-      {/* Upload button */}
-      {images.length < maxFiles && (
+      {images.length <
+        maxFiles && (
         <div>
           <input
             ref={inputRef}
             type="file"
             accept="image/jpeg,image/png,image/webp"
-            multiple={maxFiles > 1}
-            onChange={handleFileSelect}
+            multiple={
+              maxFiles > 1
+            }
+            onChange={
+              handleFileSelect
+            }
             className="hidden"
           />
 
@@ -491,7 +632,8 @@ function ImageUpload({
                 <Loader2 className="h-6 w-6 text-accent animate-spin" />
 
                 <span className="text-sm font-medium text-accent">
-                  Uploading... {progress}%
+                  Uploading...{" "}
+                  {progress}%
                 </span>
               </>
             ) : (
@@ -500,12 +642,17 @@ function ImageUpload({
 
                 <span className="text-sm font-medium text-secondary-text">
                   Click to upload image
-                  {maxFiles > 1 ? "s" : ""}
+                  {maxFiles >
+                  1
+                    ? "s"
+                    : ""}
                 </span>
 
                 <span className="text-xs text-secondary-text/60">
-                  JPG, PNG, WebP up to 5MB
-                  {maxFiles > 1
+                  JPG, PNG, WebP up to
+                  5MB
+                  {maxFiles >
+                  1
                     ? ` • ${images.length}/${maxFiles} uploaded`
                     : ""}
                 </span>
@@ -518,10 +665,13 @@ function ImageUpload({
   );
 }
 
-/* ─── Main Form ─── */
+/* ─────────────────────────────────────────────
+   MAIN FORM
+───────────────────────────────────────────── */
 
 export default function ProfessionalForm() {
-  const router = useRouter();
+  const router =
+    useRouter();
 
   const {
     user,
@@ -535,7 +685,8 @@ export default function ProfessionalForm() {
   const [submitError, setSubmitError] =
     useState<string | null>(null);
 
-  const [step, setStep] = useState(0);
+  const [step, setStep] =
+    useState(0);
 
   const [profilePhoto, setProfilePhoto] =
     useState<string>(
@@ -546,7 +697,8 @@ export default function ProfessionalForm() {
 
   const [portfolioPhotos, setPortfolioPhotos] =
     useState<string[]>(
-      profile?.portfolioPhotos || []
+      profile?.portfolioPhotos ||
+        []
     );
 
   const {
@@ -555,69 +707,100 @@ export default function ProfessionalForm() {
     watch,
     setValue,
     getValues,
-    formState: { errors },
-  } = useForm<OnboardingFormData>({
-    resolver: zodResolver(
-      onboardingSchema
-    ),
-    defaultValues: {
-      displayName:
-        user?.displayName ||
-        profile?.displayName ||
-        "",
-
-      email:
-        user?.email ||
-        profile?.email ||
-        "",
-
-      phone: profile?.phone || "",
-
-      city: profile?.city || "",
-
-      professionalType:
-        profile?.professionalType || "",
-
-      specialization:
-        profile?.specialization || "",
-
-      experienceYears:
-        profile?.experienceYears || 0,
-
-      organization:
-        profile?.organization || "",
-
-      qualifications:
-        profile?.qualifications || [],
-
-      certifications:
-        profile?.certifications || [],
-
-      areasOfExpertise:
-        profile?.areasOfExpertise || [],
-
-      bio: profile?.bio || "",
-
-      linkedinUrl:
-        profile?.linkedinUrl || "",
-
-      portfolioUrl:
-        profile?.portfolioUrl || "",
+    formState: {
+      errors,
     },
-  });
+  } =
+    useForm<OnboardingFormData>({
+      resolver:
+        zodResolver(
+          onboardingSchema
+        ),
 
-  const selectedType = watch(
-    "professionalType"
-  );
+      defaultValues: {
+        displayName:
+          user?.displayName ||
+          profile?.displayName ||
+          "",
+
+        email:
+          user?.email ||
+          profile?.email ||
+          "",
+
+        phone:
+          profile?.phone ||
+          "",
+
+        city:
+          profile?.city ||
+          "",
+
+        professionalType:
+          profile?.professionalType ||
+          "",
+
+        specialization:
+          profile?.specialization ||
+          "",
+
+        experienceYears:
+          profile?.experienceYears ||
+          0,
+
+        organization:
+          profile?.organization ||
+          "",
+
+        qualifications:
+          profile?.qualifications ||
+          [],
+
+        certifications:
+          profile?.certifications ||
+          [],
+
+        areasOfExpertise:
+          profile?.areasOfExpertise ||
+          [],
+
+        bio:
+          profile?.bio ||
+          "",
+
+        linkedinUrl:
+          profile?.linkedinUrl ||
+          "",
+
+        portfolioUrl:
+          profile?.portfolioUrl ||
+          "",
+      },
+    });
+
+  const selectedType =
+    watch(
+      "professionalType"
+    );
 
   const qualifications =
-    watch("qualifications") || [];
+    watch(
+      "qualifications"
+    ) || [];
 
   const certifications =
-    watch("certifications") || [];
+    watch(
+      "certifications"
+    ) || [];
 
   const areasOfExpertise =
-    watch("areasOfExpertise") || [];
+    watch(
+      "areasOfExpertise"
+    ) || [];
+
+  /* ─────────────────────────────────────────
+     SUBMIT
+  ───────────────────────────────────────── */
 
   const onSubmit = async (
     data: OnboardingFormData
@@ -633,18 +816,20 @@ export default function ProfessionalForm() {
     setSubmitError(null);
 
     try {
-      const profileRef = doc(
-        db,
-        "professionals",
-        user.uid
-      );
+      const profileRef =
+        doc(
+          db,
+          "professionals",
+          user.uid
+        );
 
       const payload = {
         uid: user.uid,
 
         email: data.email,
 
-        displayName: data.displayName,
+        displayName:
+          data.displayName,
 
         photoURL:
           profilePhoto ||
@@ -665,30 +850,39 @@ export default function ProfessionalForm() {
           data.experienceYears,
 
         organization:
-          data.organization || "",
+          data.organization ||
+          "",
 
         qualifications:
           data.qualifications,
 
         certifications:
-          data.certifications || [],
+          data.certifications ||
+          [],
 
         areasOfExpertise:
-          data.areasOfExpertise || [],
+          data.areasOfExpertise ||
+          [],
 
         bio: data.bio,
 
         linkedinUrl:
-          data.linkedinUrl || "",
+          data.linkedinUrl ||
+          "",
 
         portfolioUrl:
-          data.portfolioUrl || "",
+          data.portfolioUrl ||
+          "",
 
         portfolioPhotos:
           portfolioPhotos,
 
         profileCompleted: true,
 
+        /*
+         * New profiles start as pending.
+         * Your admin can later approve them.
+         */
         status: "pending",
 
         updatedAt:
@@ -698,17 +892,20 @@ export default function ProfessionalForm() {
       await setDoc(
         profileRef,
         payload,
-        { merge: true }
+        {
+          merge: true,
+        }
       );
 
       await refreshProfile();
 
-      window.location.href =
-        "/professional/dashboard";
-    } catch (err: unknown) {
+      router.push(
+        "/professional/dashboard"
+      );
+    } catch (error) {
       console.error(
         "Save error:",
-        err
+        error
       );
 
       setSubmitError(
@@ -719,95 +916,131 @@ export default function ProfessionalForm() {
     }
   };
 
-  const handleFinalSubmit = () => {
-    const values = getValues();
+  /* ─────────────────────────────────────────
+     FINAL VALIDATION
+  ───────────────────────────────────────── */
 
-    if (
-      !values.displayName ||
-      values.displayName.trim().length < 2
-    ) {
-      setStep(0);
-      setSubmitError(
-        "Full name is required."
-      );
-      return;
-    }
+  const handleFinalSubmit =
+    () => {
+      const values =
+        getValues();
 
-    if (
-      !values.phone ||
-      values.phone.trim().length < 10
-    ) {
-      setStep(0);
-      setSubmitError(
-        "Phone number is required."
-      );
-      return;
-    }
+      if (
+        !values.displayName ||
+        values.displayName.trim()
+          .length < 2
+      ) {
+        setStep(0);
 
-    if (
-      !values.city ||
-      values.city.trim().length < 2
-    ) {
-      setStep(0);
-      setSubmitError(
-        "City is required."
-      );
-      return;
-    }
+        setSubmitError(
+          "Full name is required."
+        );
 
-    if (!values.professionalType) {
-      setStep(1);
-      setSubmitError(
-        "Professional type is required."
-      );
-      return;
-    }
+        return;
+      }
 
-    if (!values.specialization) {
-      setStep(1);
-      setSubmitError(
-        "Specialization is required."
-      );
-      return;
-    }
+      if (
+        !values.phone ||
+        values.phone.trim()
+          .length < 10
+      ) {
+        setStep(0);
 
-    if (
-      values.experienceYears ===
-        undefined ||
-      values.experienceYears === null ||
-      Number(values.experienceYears) < 0
-    ) {
-      setStep(1);
-      setSubmitError(
-        "Years of experience is required."
-      );
-      return;
-    }
+        setSubmitError(
+          "Phone number is required."
+        );
 
-    if (
-      !values.qualifications ||
-      values.qualifications.length === 0
-    ) {
-      setStep(2);
-      setSubmitError(
-        "At least one qualification is required."
-      );
-      return;
-    }
+        return;
+      }
 
-    if (
-      !values.bio ||
-      values.bio.trim().length < 50
-    ) {
-      setStep(3);
-      setSubmitError(
-        "Professional bio must be at least 50 characters."
-      );
-      return;
-    }
+      if (
+        !values.city ||
+        values.city.trim()
+          .length < 2
+      ) {
+        setStep(0);
 
-    handleSubmit(onSubmit)();
-  };
+        setSubmitError(
+          "City is required."
+        );
+
+        return;
+      }
+
+      if (
+        !values.professionalType
+      ) {
+        setStep(1);
+
+        setSubmitError(
+          "Professional type is required."
+        );
+
+        return;
+      }
+
+      if (
+        !values.specialization
+      ) {
+        setStep(1);
+
+        setSubmitError(
+          "Specialization is required."
+        );
+
+        return;
+      }
+
+      if (
+        values.experienceYears ===
+          undefined ||
+        values.experienceYears ===
+          null ||
+        Number(
+          values.experienceYears
+        ) < 0
+      ) {
+        setStep(1);
+
+        setSubmitError(
+          "Years of experience is required."
+        );
+
+        return;
+      }
+
+      if (
+        !values.qualifications ||
+        values.qualifications
+          .length === 0
+      ) {
+        setStep(2);
+
+        setSubmitError(
+          "At least one qualification is required."
+        );
+
+        return;
+      }
+
+      if (
+        !values.bio ||
+        values.bio.trim()
+          .length < 50
+      ) {
+        setStep(3);
+
+        setSubmitError(
+          "Professional bio must be at least 50 characters."
+        );
+
+        return;
+      }
+
+      handleSubmit(
+        onSubmit
+      )();
+    };
 
   const sections = [
     {
@@ -816,7 +1049,8 @@ export default function ProfessionalForm() {
         "Your personal details",
     },
     {
-      title: "Professional Information",
+      title:
+        "Professional Information",
       description:
         "Your work expertise",
     },
@@ -847,45 +1081,54 @@ export default function ProfessionalForm() {
   return (
     <div className="max-w-3xl mx-auto">
 
-      {/* Progress */}
+      {/* ─────────────────────────────
+          PROGRESS
+      ───────────────────────────── */}
+
       <div className="mb-10">
         <div className="flex items-center justify-between mb-4">
-          {sections.map((s, i) => (
-            <div
-              key={i}
-              className="flex flex-col items-center gap-2 flex-1"
-            >
-              <button
-                type="button"
-                onClick={() =>
-                  setStep(i)
-                }
-                className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-colors",
-                  i <= step
-                    ? "bg-accent text-white"
-                    : "bg-light-gray text-secondary-text"
-                )}
+          {sections.map(
+            (section, i) => (
+              <div
+                key={i}
+                className="flex flex-col items-center gap-2 flex-1"
               >
-                {i < step ? (
-                  <Check className="h-5 w-5" />
-                ) : (
-                  i + 1
-                )}
-              </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setStep(i)
+                  }
+                  className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-colors",
 
-              <span
-                className={cn(
-                  "text-xs font-medium hidden sm:block",
-                  i <= step
-                    ? "text-text"
-                    : "text-secondary-text"
-                )}
-              >
-                {s.title}
-              </span>
-            </div>
-          ))}
+                    i <= step
+                      ? "bg-accent text-white"
+                      : "bg-light-gray text-secondary-text"
+                  )}
+                >
+                  {i < step ? (
+                    <Check className="h-5 w-5" />
+                  ) : (
+                    i + 1
+                  )}
+                </button>
+
+                <span
+                  className={cn(
+                    "text-xs font-medium hidden sm:block",
+
+                    i <= step
+                      ? "text-text"
+                      : "text-secondary-text"
+                  )}
+                >
+                  {
+                    section.title
+                  }
+                </span>
+              </div>
+            )
+          )}
         </div>
 
         <div className="h-1.5 bg-light-gray rounded-full overflow-hidden">
@@ -910,7 +1153,10 @@ export default function ProfessionalForm() {
 
       <AnimatePresence mode="wait">
 
-        {/* Step 0: Basic Information */}
+        {/* ─────────────────────────────
+            STEP 0
+        ───────────────────────────── */}
+
         {step === 0 && (
           <motion.div
             key="step0"
@@ -929,7 +1175,8 @@ export default function ProfessionalForm() {
             className="space-y-6"
           >
 
-            {/* Profile Photo Upload */}
+            {/* Profile Photo */}
+
             <div>
               <label className="block text-sm font-semibold text-text mb-3">
                 Profile Photo
@@ -941,7 +1188,9 @@ export default function ProfessionalForm() {
 
                   {profilePhoto ? (
                     <Image
-                      src={profilePhoto}
+                      src={
+                        profilePhoto
+                      }
                       alt="Profile"
                       fill
                       className="object-cover"
@@ -956,22 +1205,31 @@ export default function ProfessionalForm() {
                 </div>
 
                 <div className="flex-1">
+
                   <ImageUpload
                     label=""
                     images={
                       profilePhoto
-                        ? [profilePhoto]
+                        ? [
+                            profilePhoto,
+                          ]
                         : []
                     }
-                    onChange={(urls) =>
+                    onChange={(
+                      urls
+                    ) =>
                       setProfilePhoto(
-                        urls[0] || ""
+                        urls[0] ||
+                          ""
                       )
                     }
                     maxFiles={1}
                     folder="profile"
-                    uid={user.uid}
+                    uid={
+                      user.uid
+                    }
                   />
+
                 </div>
 
               </div>
@@ -983,6 +1241,7 @@ export default function ProfessionalForm() {
             </div>
 
             {/* Full Name */}
+
             <div>
               <label className="block text-sm font-semibold text-text mb-2">
                 Full Name{" "}
@@ -992,10 +1251,13 @@ export default function ProfessionalForm() {
               </label>
 
               <input
-                {...register("displayName")}
+                {...register(
+                  "displayName"
+                )}
                 type="text"
                 className={cn(
                   "w-full px-4 py-3 rounded-2xl border bg-white text-sm outline-none transition-colors",
+
                   errors.displayName
                     ? "border-red-300 focus:border-red-400"
                     : "border-border focus:border-accent"
@@ -1006,7 +1268,8 @@ export default function ProfessionalForm() {
               {errors.displayName && (
                 <p className="text-xs text-red-500 mt-1.5">
                   {
-                    errors.displayName
+                    errors
+                      .displayName
                       .message
                   }
                 </p>
@@ -1014,6 +1277,7 @@ export default function ProfessionalForm() {
             </div>
 
             {/* Email */}
+
             <div>
               <label className="block text-sm font-semibold text-text mb-2">
                 Email{" "}
@@ -1023,7 +1287,9 @@ export default function ProfessionalForm() {
               </label>
 
               <input
-                {...register("email")}
+                {...register(
+                  "email"
+                )}
                 type="email"
                 readOnly
                 className="w-full px-4 py-3 rounded-2xl border border-border bg-light-gray text-sm text-secondary-text cursor-not-allowed outline-none"
@@ -1035,6 +1301,7 @@ export default function ProfessionalForm() {
             </div>
 
             {/* Phone */}
+
             <div>
               <label className="block text-sm font-semibold text-text mb-2">
                 Phone Number{" "}
@@ -1044,10 +1311,13 @@ export default function ProfessionalForm() {
               </label>
 
               <input
-                {...register("phone")}
+                {...register(
+                  "phone"
+                )}
                 type="tel"
                 className={cn(
                   "w-full px-4 py-3 rounded-2xl border bg-white text-sm outline-none transition-colors",
+
                   errors.phone
                     ? "border-red-300 focus:border-red-400"
                     : "border-border focus:border-accent"
@@ -1057,12 +1327,16 @@ export default function ProfessionalForm() {
 
               {errors.phone && (
                 <p className="text-xs text-red-500 mt-1.5">
-                  {errors.phone.message}
+                  {
+                    errors.phone
+                      .message
+                  }
                 </p>
               )}
             </div>
 
             {/* City */}
+
             <div>
               <label className="block text-sm font-semibold text-text mb-2">
                 City{" "}
@@ -1072,10 +1346,13 @@ export default function ProfessionalForm() {
               </label>
 
               <input
-                {...register("city")}
+                {...register(
+                  "city"
+                )}
                 type="text"
                 className={cn(
                   "w-full px-4 py-3 rounded-2xl border bg-white text-sm outline-none transition-colors",
+
                   errors.city
                     ? "border-red-300 focus:border-red-400"
                     : "border-border focus:border-accent"
@@ -1085,7 +1362,10 @@ export default function ProfessionalForm() {
 
               {errors.city && (
                 <p className="text-xs text-red-500 mt-1.5">
-                  {errors.city.message}
+                  {
+                    errors.city
+                      .message
+                  }
                 </p>
               )}
             </div>
@@ -1093,7 +1373,10 @@ export default function ProfessionalForm() {
           </motion.div>
         )}
 
-        {/* Step 1: Professional Information */}
+        {/* ─────────────────────────────
+            STEP 1
+        ───────────────────────────── */}
+
         {step === 1 && (
           <motion.div
             key="step1"
@@ -1113,6 +1396,7 @@ export default function ProfessionalForm() {
           >
 
             {/* Professional Type */}
+
             <div>
               <label className="block text-sm font-semibold text-text mb-2">
                 Professional Type{" "}
@@ -1127,6 +1411,7 @@ export default function ProfessionalForm() {
                 )}
                 className={cn(
                   "w-full px-4 py-3 rounded-2xl border bg-white text-sm outline-none appearance-none transition-colors",
+
                   errors.professionalType
                     ? "border-red-300 focus:border-red-400"
                     : "border-border focus:border-accent"
@@ -1160,6 +1445,7 @@ export default function ProfessionalForm() {
             </div>
 
             {/* Specialization */}
+
             <div>
               <label className="block text-sm font-semibold text-text mb-2">
                 Specialization{" "}
@@ -1172,12 +1458,16 @@ export default function ProfessionalForm() {
                 {...register(
                   "specialization"
                 )}
-                disabled={!selectedType}
+                disabled={
+                  !selectedType
+                }
                 className={cn(
                   "w-full px-4 py-3 rounded-2xl border bg-white text-sm outline-none appearance-none transition-colors",
+
                   errors.specialization
                     ? "border-red-300 focus:border-red-400"
                     : "border-border focus:border-accent",
+
                   !selectedType &&
                     "bg-light-gray cursor-not-allowed"
                 )}
@@ -1192,20 +1482,23 @@ export default function ProfessionalForm() {
                   SPECIALIZATIONS[
                     selectedType
                   ] || []
-                ).map((spec) => (
-                  <option
-                    key={spec}
-                    value={spec}
-                  >
-                    {spec}
-                  </option>
-                ))}
+                ).map(
+                  (spec) => (
+                    <option
+                      key={spec}
+                      value={spec}
+                    >
+                      {spec}
+                    </option>
+                  )
+                )}
               </select>
 
               {errors.specialization && (
                 <p className="text-xs text-red-500 mt-1.5">
                   {
-                    errors.specialization
+                    errors
+                      .specialization
                       .message
                   }
                 </p>
@@ -1213,6 +1506,7 @@ export default function ProfessionalForm() {
             </div>
 
             {/* Experience */}
+
             <div>
               <label className="block text-sm font-semibold text-text mb-2">
                 Years of Experience{" "}
@@ -1230,6 +1524,7 @@ export default function ProfessionalForm() {
                 max={60}
                 className={cn(
                   "w-full px-4 py-3 rounded-2xl border bg-white text-sm outline-none transition-colors",
+
                   errors.experienceYears
                     ? "border-red-300 focus:border-red-400"
                     : "border-border focus:border-accent"
@@ -1249,13 +1544,16 @@ export default function ProfessionalForm() {
             </div>
 
             {/* Organization */}
+
             <div>
               <label className="block text-sm font-semibold text-text mb-2">
                 Current Organization / Practice
               </label>
 
               <input
-                {...register("organization")}
+                {...register(
+                  "organization"
+                )}
                 type="text"
                 className="w-full px-4 py-3 rounded-2xl border border-border bg-white text-sm outline-none focus:border-accent transition-colors"
                 placeholder="Company name or Independent Practice"
@@ -1265,7 +1563,10 @@ export default function ProfessionalForm() {
           </motion.div>
         )}
 
-        {/* Step 2: Qualifications & Expertise */}
+        {/* ─────────────────────────────
+            STEP 2
+        ───────────────────────────── */}
+
         {step === 2 && (
           <motion.div
             key="step2"
@@ -1293,8 +1594,12 @@ export default function ProfessionalForm() {
                   </span>
                 </>
               }
-              tags={qualifications}
-              onChange={(tags) =>
+              tags={
+                qualifications
+              }
+              onChange={(
+                tags
+              ) =>
                 setValue(
                   "qualifications",
                   tags,
@@ -1306,15 +1611,20 @@ export default function ProfessionalForm() {
               }
               placeholder="e.g. B.Tech Civil, MBA Construction..."
               error={
-                errors.qualifications
+                errors
+                  .qualifications
                   ?.message
               }
             />
 
             <TagInput
               label="Certifications"
-              tags={certifications}
-              onChange={(tags) =>
+              tags={
+                certifications
+              }
+              onChange={(
+                tags
+              ) =>
                 setValue(
                   "certifications",
                   tags
@@ -1325,8 +1635,12 @@ export default function ProfessionalForm() {
 
             <TagInput
               label="Areas of Expertise"
-              tags={areasOfExpertise}
-              onChange={(tags) =>
+              tags={
+                areasOfExpertise
+              }
+              onChange={(
+                tags
+              ) =>
                 setValue(
                   "areasOfExpertise",
                   tags
@@ -1338,7 +1652,10 @@ export default function ProfessionalForm() {
           </motion.div>
         )}
 
-        {/* Step 3: About & Online Presence */}
+        {/* ─────────────────────────────
+            STEP 3
+        ───────────────────────────── */}
+
         {step === 3 && (
           <motion.div
             key="step3"
@@ -1357,7 +1674,8 @@ export default function ProfessionalForm() {
             className="space-y-6"
           >
 
-            {/* Professional Bio */}
+            {/* Bio */}
+
             <div>
               <label className="block text-sm font-semibold text-text mb-2">
                 Professional Bio{" "}
@@ -1367,10 +1685,13 @@ export default function ProfessionalForm() {
               </label>
 
               <textarea
-                {...register("bio")}
+                {...register(
+                  "bio"
+                )}
                 rows={5}
                 className={cn(
                   "w-full px-4 py-3 rounded-2xl border bg-white text-sm outline-none resize-none transition-colors",
+
                   errors.bio
                     ? "border-red-300 focus:border-red-400"
                     : "border-border focus:border-accent"
@@ -1381,7 +1702,11 @@ export default function ProfessionalForm() {
               <div className="flex justify-between mt-1.5">
                 {errors.bio ? (
                   <p className="text-xs text-red-500">
-                    {errors.bio.message}
+                    {
+                      errors
+                        .bio
+                        .message
+                    }
                   </p>
                 ) : (
                   <span />
@@ -1393,27 +1718,36 @@ export default function ProfessionalForm() {
               </div>
             </div>
 
-            {/* Portfolio Photos Upload */}
+            {/* Portfolio Photos */}
+
             <ImageUpload
               label="Work Portfolio Photos"
-              images={portfolioPhotos}
-              onChange={setPortfolioPhotos}
+              images={
+                portfolioPhotos
+              }
+              onChange={
+                setPortfolioPhotos
+              }
               maxFiles={8}
               folder="portfolio"
               uid={user.uid}
             />
 
             {/* LinkedIn */}
+
             <div>
               <label className="block text-sm font-semibold text-text mb-2">
                 LinkedIn URL
               </label>
 
               <input
-                {...register("linkedinUrl")}
+                {...register(
+                  "linkedinUrl"
+                )}
                 type="url"
                 className={cn(
                   "w-full px-4 py-3 rounded-2xl border bg-white text-sm outline-none transition-colors",
+
                   errors.linkedinUrl
                     ? "border-red-300 focus:border-red-400"
                     : "border-border focus:border-accent"
@@ -1424,7 +1758,8 @@ export default function ProfessionalForm() {
               {errors.linkedinUrl && (
                 <p className="text-xs text-red-500 mt-1.5">
                   {
-                    errors.linkedinUrl
+                    errors
+                      .linkedinUrl
                       .message
                   }
                 </p>
@@ -1432,6 +1767,7 @@ export default function ProfessionalForm() {
             </div>
 
             {/* Portfolio URL */}
+
             <div>
               <label className="block text-sm font-semibold text-text mb-2">
                 Portfolio / Website URL
@@ -1444,6 +1780,7 @@ export default function ProfessionalForm() {
                 type="url"
                 className={cn(
                   "w-full px-4 py-3 rounded-2xl border bg-white text-sm outline-none transition-colors",
+
                   errors.portfolioUrl
                     ? "border-red-300 focus:border-red-400"
                     : "border-border focus:border-accent"
@@ -1454,7 +1791,8 @@ export default function ProfessionalForm() {
               {errors.portfolioUrl && (
                 <p className="text-xs text-red-500 mt-1.5">
                   {
-                    errors.portfolioUrl
+                    errors
+                      .portfolioUrl
                       .message
                   }
                 </p>
@@ -1466,7 +1804,10 @@ export default function ProfessionalForm() {
 
       </AnimatePresence>
 
-      {/* Submit Error */}
+      {/* ─────────────────────────────
+          ERROR
+      ───────────────────────────── */}
+
       <AnimatePresence>
         {submitError && (
           <motion.div
@@ -1493,15 +1834,22 @@ export default function ProfessionalForm() {
         )}
       </AnimatePresence>
 
-      {/* Navigation */}
+      {/* ─────────────────────────────
+          NAVIGATION
+      ───────────────────────────── */}
+
       <div className="flex items-center justify-between mt-10">
 
         <Button
           type="button"
           variant="ghost"
           onClick={() =>
-            setStep((s) =>
-              Math.max(0, s - 1)
+            setStep(
+              (s) =>
+                Math.max(
+                  0,
+                  s - 1
+                )
             )
           }
           disabled={step === 0}
@@ -1513,9 +1861,16 @@ export default function ProfessionalForm() {
         sections.length - 1 ? (
           <Button
             type="button"
-            onClick={() =>
-              setStep((s) => s + 1)
-            }
+            onClick={() => {
+              setSubmitError(
+                null
+              );
+
+              setStep(
+                (s) =>
+                  s + 1
+              );
+            }}
             className="group"
           >
             Next
@@ -1528,7 +1883,9 @@ export default function ProfessionalForm() {
             onClick={
               handleFinalSubmit
             }
-            isLoading={submitting}
+            isLoading={
+              submitting
+            }
             className="group"
           >
             {submitting
@@ -1544,4 +1901,4 @@ export default function ProfessionalForm() {
       </div>
     </div>
   );
-}
+}      
