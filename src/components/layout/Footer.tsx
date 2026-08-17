@@ -50,7 +50,7 @@ export default function Footer() {
 
               {/* WhatsApp */}
               <a
-                href="https://wa.me/919315902661"
+                href="https://wa.me/919315902661?text=Hello%20Supervisors%20of%20India%2C%20I%20would%20like%20to%20get%20in%20touch%20regarding%20your%20construction%20professional%20services.%20Please%20share%20more%20information.%20Thank%20you."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 text-sm text-white/60 hover:text-accent transition-colors"
