@@ -1,8 +1,7 @@
 export const NAV_LINKS = [
-  { label: "Home", href: "#" },
+  { label: "Home", href: "/" },
   { label: "About Us", href: "#about" },
   { label: "How It Works", href: "#how-it-works" },
-  { label: "Find Professionals", href: "#hire-Professionals" },
   { label: "Contact", href: "#contact" },
 ];
 
@@ -16,8 +15,23 @@ export const CATEGORIES = [
   { name: "MEP Engineer", icon: "Zap", description: "Mechanical & electrical" },
   { name: "Consultant", icon: "MessageSquare", description: "Expert guidance" },
   { name: "3D Visualizer", icon: "Box", description: "Render & visualization" },
+  { name: "Structural Engineer", icon: "Box", description: "Structural analysis" },
   { name: "Other", icon: "MoreHorizontal", description: "Specialized services" },
 ];
+
+export const SPECIALIZATION_MAP: Record<string, string[]> = {
+  "Site Supervisor": ["Residential", "Commercial", "Industrial", "Infrastructure", "Renovation"],
+  "Civil Engineer": ["Structural", "Geotechnical", "Transportation", "Water Resources", "Environmental"],
+  "Architect": ["Residential", "Commercial", "Landscape", "Sustainable", "Urban"],
+  "Interior Designer": ["Residential", "Commercial", "Hospitality", "Retail", "Corporate"],
+  "Project Manager": ["Construction", "Infrastructure", "Real Estate", "Renovation"],
+  "Quantity Surveyor": ["Cost Estimation", "Contract Management", "Procurement", "Valuation"],
+  "MEP Engineer": ["Mechanical", "Electrical", "Plumbing", "HVAC", "Fire Protection"],
+  "Consultant": ["Structural", "Project Management", "Sustainability", "Legal", "Safety"],
+  "3D Visualizer": ["Architectural", "Interior", "Product", "Animation", "VR/AR"],
+  "Structural Engineer": ["Concrete", "Steel", "Timber", "Masonry", "Seismic"],
+  "Other": ["General"],
+};
 
 export const MEMBERSHIP_TIERS = [
   {
@@ -173,7 +187,6 @@ export const STATS = [
   { value: "Pan-India", label: "All 28 states & UTs covered from day one." },
   { value: "20+ Professions", label: "Supervisors, Engineers, Architects, PMs & more." },
   { value: "Verified Only", label: "Every profile reviewed before going live." },
-  // { value: "1000", suffix: "+", label: "Projects Completed" },
 ];
 
 export const FOOTER_LINKS = {

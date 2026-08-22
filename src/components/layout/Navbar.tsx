@@ -2,14 +2,21 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
 import Image from "next/image";
 import { NAV_LINKS } from "@/lib/constants";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
+import { useAuth } from "@/lib/auth-context";
+import JoinAsProfessionalButton from "@/components/auth/JoinAsProfessionalButton";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, profile, signInWithGoogle, logout, authLoading } = useAuth();
+
+  const handleSignIn = async () => {
+    await signInWithGoogle();
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-border">
@@ -51,10 +58,44 @@ export default function Navbar() {
 
           {/* Desktop CTA */}
           <div className="hidden lg:flex items-center gap-3">
-            <Button variant="ghost" size="sm">
-              Sign In
-            </Button>
-            <Button size="sm">Get Started</Button>
+            {user ? (
+              <>
+                {profile ? (
+                  <Link href="/professional/dashboard">
+                    <Button variant="ghost" size="sm">Dashboard</Button>
+                  </Link>
+                ) : (
+                  <Link href="/hire-professional">
+                    <Button variant="secondary" size="sm">Hire Professional</Button>
+                  </Link>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={logout}
+                  className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                >
+                  <LogOut className="h-4 w-4 mr-1.5" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSignIn}
+                  isLoading={authLoading}
+                  disabled={authLoading}
+                >
+                  {authLoading ? "Signing in..." : "Sign In"}
+                </Button>
+                <Link href="/hire-professional">
+                  <Button variant="secondary" size="sm">Hire Professional</Button>
+                </Link>
+                <JoinAsProfessionalButton variant="primary" size="sm" />
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -93,10 +134,47 @@ export default function Navbar() {
                 </Link>
               ))}
               <div className="pt-4 space-y-3">
-                <Button variant="ghost" fullWidth>
-                  Sign In
-                </Button>
-                <Button fullWidth>Get Started</Button>
+                {user ? (
+                  <>
+                    {profile ? (
+                      <Link href="/professional/dashboard" onClick={() => setIsOpen(false)}>
+                        <Button fullWidth>Dashboard</Button>
+                      </Link>
+                    ) : (
+                      <Link href="/hire-professional" onClick={() => setIsOpen(false)}>
+                        <Button variant="secondary" fullWidth>Hire Professional</Button>
+                      </Link>
+                    )}
+                    <Button
+                      variant="ghost"
+                      fullWidth
+                      onClick={() => {
+                        logout();
+                        setIsOpen(false);
+                      }}
+                      className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                    >
+                      <LogOut className="h-4 w-4 mr-1.5" />
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      variant="ghost"
+                      fullWidth
+                      onClick={handleSignIn}
+                      isLoading={authLoading}
+                      disabled={authLoading}
+                    >
+                      {authLoading ? "Signing in..." : "Sign In"}
+                    </Button>
+                    <Link href="/hire-professional" onClick={() => setIsOpen(false)}>
+                      <Button variant="secondary" fullWidth>Hire Professional</Button>
+                    </Link>
+                    <JoinAsProfessionalButton fullWidth />
+                  </>
+                )}
               </div>
             </div>
           </motion.div>
