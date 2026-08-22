@@ -645,6 +645,7 @@ import {
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import JoinAsProfessionalButton from "@/components/auth/JoinAsProfessionalButton";
+import Link from "next/link";
 
 const heroFeatures = [
   {
@@ -804,6 +805,8 @@ export default function Hero() {
 
               {/* Hire Professionals */}
               <div className="w-full sm:w-auto">
+                <Link href="/hire-professional">
+
                 <Button
                   size="lg"
                   className="group w-full sm:w-auto justify-center"
@@ -812,6 +815,8 @@ export default function Hero() {
 
                   <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
+                </Link>
+
               </div>
 
               {/* Join as Professional */}
