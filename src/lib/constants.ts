@@ -2,7 +2,7 @@ export const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "About Us", href: "/about-us" },
   { label: "How It Works", href: "/how-it-works" },
-  { label: "Contact", href: "/contact" },
+  { label: "Contact", href: "/contact-us" },
 ];
 
 export const CATEGORIES = [
