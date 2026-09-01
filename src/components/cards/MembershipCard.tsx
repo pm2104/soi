@@ -5,6 +5,7 @@ import { Check } from "lucide-react";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 interface MembershipCardProps {
   name: string;
@@ -15,6 +16,7 @@ interface MembershipCardProps {
   cta: string;
   highlighted: boolean;
   index: number;
+  href: string;
 }
 
 export default function MembershipCard({
@@ -26,6 +28,7 @@ export default function MembershipCard({
   cta,
   highlighted,
   index,
+  href
 }: MembershipCardProps) {
   return (
     <motion.div
@@ -121,13 +124,15 @@ export default function MembershipCard({
         ))}
       </ul>
 
-      <Button
+      <Link href={href}>
+        <Button
         variant={highlighted ? "primary" : "secondary"}
         fullWidth
         className={!highlighted ? "border-navy/10" : ""}
       >
         {cta}
       </Button>
+      </Link>
     </motion.div>
   );
 }

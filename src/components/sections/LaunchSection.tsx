@@ -5,7 +5,7 @@ import { Rocket, TrendingUp, MapPin, Users, Award } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import { STATS } from "@/lib/constants";
-
+import Link from "next/link";
 export default function LaunchSection() {
   return (
     <section className="py-20 md:py-28 bg-navy relative overflow-hidden">
@@ -55,10 +55,14 @@ export default function LaunchSection() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
           >
-            <Button size="lg">Register Now</Button>
-            <Button variant="outline" size="lg">
-              Learn More
-            </Button>
+            <Link href="/hire-professional">
+              <Button size="lg">Join as Professional</Button>
+            </Link>
+            <Link href="/hire-professional">
+              <Button variant="outline" size="lg">
+                Hire Professional
+              </Button>
+            </Link>
           </motion.div>
         </div>
 

@@ -18,6 +18,7 @@ import { db } from "@/lib/firebase";
 import ProfessionalCard from "@/components/cards/ProfessionalCard";
 import SectionHeading from "@/components/ui/SectionHeading";
 import Button from "@/components/ui/Button";
+import Link from "next/link";
 
 interface Professional {
   uid: string;
@@ -191,10 +192,13 @@ export default function ProfessionalsSection() {
           }}
           className="text-center mt-12"
         >
-          <Button size="lg" className="group">
-            View All Professionals
-            <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
-          </Button>
+          
+          <Link href="/hire-professional">
+            <Button size="lg" className="group">
+              View All Professionals
+              <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </Link>
         </motion.div>
 
       </div>

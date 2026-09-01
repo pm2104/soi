@@ -24,6 +24,7 @@ export default function MembershipSection() {
               cta={tier.cta}
               highlighted={tier.highlighted}
               index={index}
+              href={tier.url}
             />
           ))}
         </div>

@@ -5,6 +5,7 @@ import { Star, MapPin, Award, BadgeCheck } from "lucide-react";
 import Image from "next/image";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
+import Link from "next/link";
 
 interface ProfessionalCardProps {
   name: string;
@@ -102,14 +103,17 @@ export default function ProfessionalCard({
       </div>
 
       {/* View Profile */}
-      <Button
-        variant="ghost"
-        size="sm"
-        fullWidth
-        className="mt-2"
-      >
-        View Profile
-      </Button>
+      <Link href="/hire-professional">
+        <Button
+          variant="ghost"
+          size="sm"
+          fullWidth
+          className="mt-2"
+        >
+          View Profile
+        </Button>
+      </Link>
+      
     </motion.div>
   );
 }

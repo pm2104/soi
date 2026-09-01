@@ -47,6 +47,7 @@ export const MEMBERSHIP_TIERS = [
     ],
     cta: "Get Started",
     highlighted: false,
+    url:"/hire-professional"
   },
   {
     name: "Registered Client",
@@ -62,6 +63,7 @@ export const MEMBERSHIP_TIERS = [
     ],
     cta: "Register Now",
     highlighted: true,
+    url:"/contact-us"
   },
   {
     name: "Client Member",
@@ -81,6 +83,7 @@ export const MEMBERSHIP_TIERS = [
     ],
     cta: "Contact Sales",
     highlighted: false,
+    url:"/contact-us"
   },
 ];
 
@@ -194,22 +197,22 @@ export const STATS = [
 
 export const FOOTER_LINKS = {
   company: [
-    { label: "About Us", href: "#" },
+    { label: "About Us", href: "/about-us" },
     { label: "Careers", href: "#" },
     { label: "Blog", href: "#" },
     { label: "Press", href: "#" },
   ],
   platform: [
-    { label: "Home", href: "#" },
-    { label: "How It Works", href: "#how-it-works" },
+    { label: "Home", href: "/" },
+    { label: "How It Works", href: "/how-it-works" },
     { label: "Pricing", href: "#membership" },
-    { label: "Professionals", href: "#professionals" },
+    { label: "Professionals", href: "/hire-professional" },
     { label: "Categories", href: "#categories" },
   ],
   account: [
     { label: "Sign In", href: "#" },
-    { label: "Join as Professional", href: "#how-it-works" },
-    { label: "Hire Professional", href: "#membership" },
+    { label: "Join as Professional", href: "#" },
+    { label: "Hire Professional", href: "/hire-professional" },
   ],
   legal: [
     { label: "Privacy Policy", href: "#" },

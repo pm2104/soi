@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Button from "@/components/ui/Button";
+import Link from "next/link";
 
 export default function CTASection() {
   return (
@@ -36,13 +37,18 @@ export default function CTASection() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="group">
-              Get Started Free
-              <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
-            </Button>
-            <Button variant="outline" size="lg">
-              Talk to Sales
-            </Button>
+            <Link href="/hire-professional">
+              <Button size="lg" className="group">
+                Get Started Free
+                <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+            <Link href="/contact-us">
+              <Button variant="outline" size="lg">
+                Talk to Sales
+              </Button>
+            </Link>
+            
           </div>
 
           <p className="mt-6 text-sm text-white/40">
