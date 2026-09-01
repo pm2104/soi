@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     const { data, error } = await resend.emails.send({
       from:
         process.env.RESEND_FROM_EMAIL ||
-        "Supervisors of India <onboarding@resend.dev>",
+        "Supervisors of India <noreply@soiglobal.in>",
 
       to: ["info@soiglobal.in"],
 
