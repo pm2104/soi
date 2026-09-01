@@ -6,6 +6,7 @@ import { ProfessionalProfile } from "@/lib/auth-context";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import Image from "next/image";
+import Link from "next/link";
 
 interface ProfessionalCardProps {
   professional: ProfessionalProfile;
@@ -62,10 +63,12 @@ export default function ProfessionalCard({ professional, onViewProfile }: Profes
         <p className="text-sm text-secondary-text line-clamp-2 mb-4">
           {professional.bio || "No bio provided."}
         </p>
-
-        <Button onClick={onViewProfile} variant="secondary" fullWidth size="sm">
+      <Link href="/hire-professional">
+        <Button variant="secondary" fullWidth size="sm">
           View Profile
         </Button>
+      </Link>
+
       </div>
     </motion.div>
   );

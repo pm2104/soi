@@ -42,57 +42,83 @@ const CLOUDINARY_UPLOAD_PRESET =
    FORM SCHEMA
 ───────────────────────────────────────────── */
 
-const onboardingSchema = z.object({
-  displayName: z.string().min(2, "Full name is required"),
+const onboardingSchema = z
+  .object({
+    displayName: z.string().min(2, "Full name is required"),
 
-  email: z.string().email("Invalid email"),
+    email: z.string().email("Invalid email"),
 
-  phone: z.string().min(10, "Valid phone number is required"),
+    phone: z.string().min(10, "Valid phone number is required"),
 
-  city: z.string().min(2, "City is required"),
+    city: z.string().min(2, "City is required"),
 
-  professionalType: z
-    .string()
-    .min(1, "Professional type is required"),
+    professionalType: z
+      .string()
+      .min(1, "Professional type is required"),
 
-  specialization: z
-    .string()
-    .min(1, "Specialization is required"),
+    professionalTypeOther: z.string().optional(),
 
-  experienceYears: z.coerce
-    .number()
-    .min(0, "Experience must be 0 or more")
-    .max(60, "Experience must be realistic"),
+    specialization: z
+      .string()
+      .min(1, "Specialization is required"),
 
-  organization: z.string().optional(),
+    specializationOther: z.string().optional(),
 
-  qualifications: z
-    .array(z.string())
-    .min(1, "At least one qualification is required"),
+    experienceYears: z.coerce
+      .number()
+      .min(0, "Experience must be 0 or more")
+      .max(60, "Experience must be realistic"),
 
-  certifications: z.array(z.string()).optional(),
+    organization: z.string().optional(),
 
-  areasOfExpertise: z.array(z.string()).optional(),
+    qualifications: z
+      .array(z.string())
+      .min(1, "At least one qualification is required"),
 
-  bio: z
-    .string()
-    .min(50, "Bio must be at least 50 characters")
-    .max(1000, "Bio must be under 1000 characters"),
+    certifications: z.array(z.string()).optional(),
 
-  linkedinUrl: z
-    .string()
-    .url("Must be a valid URL")
-    .or(z.literal("")),
+    areasOfExpertise: z.array(z.string()).optional(),
 
-  portfolioUrl: z
-    .string()
-    .url("Must be a valid URL")
-    .or(z.literal("")),
-});
+    bio: z
+      .string()
+      .min(50, "Bio must be at least 50 characters")
+      .max(1000, "Bio must be under 1000 characters"),
 
-type OnboardingFormData = z.infer<
-  typeof onboardingSchema
->;
+    linkedinUrl: z
+      .string()
+      .url("Must be a valid URL")
+      .or(z.literal("")),
+
+    portfolioUrl: z
+      .string()
+      .url("Must be a valid URL")
+      .or(z.literal("")),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      data.professionalType === "Other" &&
+      !data.professionalTypeOther?.trim()
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["professionalTypeOther"],
+        message: "Please enter your professional type",
+      });
+    }
+
+    if (
+      data.specialization === "Other" &&
+      !data.specializationOther?.trim()
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["specializationOther"],
+        message: "Please enter your specialization",
+      });
+    }
+  });
+
+type OnboardingFormData = z.infer<typeof onboardingSchema>;
 
 /* ─────────────────────────────────────────────
    PROFESSIONAL TYPES
@@ -119,6 +145,7 @@ const SPECIALIZATIONS: Record<string, string[]> = {
     "Industrial",
     "Infrastructure",
     "Renovation",
+    "Other",
   ],
 
   "Civil Engineer": [
@@ -127,6 +154,7 @@ const SPECIALIZATIONS: Record<string, string[]> = {
     "Transportation",
     "Water Resources",
     "Environmental",
+    "Other",
   ],
 
   Architect: [
@@ -135,6 +163,7 @@ const SPECIALIZATIONS: Record<string, string[]> = {
     "Landscape",
     "Sustainable",
     "Urban",
+    "Other",
   ],
 
   "Interior Designer": [
@@ -143,6 +172,7 @@ const SPECIALIZATIONS: Record<string, string[]> = {
     "Hospitality",
     "Retail",
     "Corporate",
+    "Other",
   ],
 
   "Project Manager": [
@@ -150,6 +180,7 @@ const SPECIALIZATIONS: Record<string, string[]> = {
     "Infrastructure",
     "Real Estate",
     "Renovation",
+    "Other",
   ],
 
   "Quantity Surveyor": [
@@ -157,6 +188,7 @@ const SPECIALIZATIONS: Record<string, string[]> = {
     "Contract Management",
     "Procurement",
     "Valuation",
+    "Other",
   ],
 
   "MEP Engineer": [
@@ -165,6 +197,7 @@ const SPECIALIZATIONS: Record<string, string[]> = {
     "Plumbing",
     "HVAC",
     "Fire Protection",
+    "Other",
   ],
 
   Consultant: [
@@ -173,6 +206,7 @@ const SPECIALIZATIONS: Record<string, string[]> = {
     "Sustainability",
     "Legal",
     "Safety",
+    "Other",
   ],
 
   "3D Visualizer": [
@@ -181,6 +215,7 @@ const SPECIALIZATIONS: Record<string, string[]> = {
     "Product",
     "Animation",
     "VR/AR",
+    "Other",
   ],
 
   "Structural Engineer": [
@@ -189,9 +224,10 @@ const SPECIALIZATIONS: Record<string, string[]> = {
     "Timber",
     "Masonry",
     "Seismic",
+    "Other",
   ],
 
-  Other: ["General"],
+  Other: ["Other"],
 };
 
 /* ─────────────────────────────────────────────
@@ -234,10 +270,7 @@ function TagInput({
       e.preventDefault();
       addTag(input);
       setInput("");
-    } else if (
-      e.key === "," ||
-      e.key === "Tab"
-    ) {
+    } else if (e.key === "," || e.key === "Tab") {
       e.preventDefault();
       addTag(input);
       setInput("");
@@ -311,16 +344,12 @@ function TagInput({
         <input
           type="text"
           value={input}
-          onChange={(e) =>
-            setInput(e.target.value)
-          }
+          onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
           onPaste={handlePaste}
           placeholder={
-            tags.length === 0
-              ? placeholder
-              : ""
+            tags.length === 0 ? placeholder : ""
           }
           className="flex-1 min-w-[140px] bg-transparent text-sm outline-none placeholder:text-secondary-text/50 py-1"
         />
@@ -372,11 +401,8 @@ function ImageUpload({
   folder,
   uid,
 }: ImageUploadProps) {
-  const [uploading, setUploading] =
-    useState(false);
-
-  const [progress, setProgress] =
-    useState(0);
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   const inputRef =
     useRef<HTMLInputElement>(null);
@@ -397,7 +423,6 @@ function ImageUpload({
       alert(
         "Cloudinary configuration is missing. Please check your environment variables."
       );
-
       return;
     }
 
@@ -416,7 +441,6 @@ function ImageUpload({
           maxFiles > 1 ? "s" : ""
         } allowed.`
       );
-
       return;
     }
 
@@ -430,23 +454,16 @@ function ImageUpload({
       i < filesToUpload.length;
       i++
     ) {
-      const file =
-        filesToUpload[i];
+      const file = filesToUpload[i];
 
-      if (
-        file.size > MAX_FILE_SIZE
-      ) {
+      if (file.size > MAX_FILE_SIZE) {
         alert(
           `${file.name} is too large. Maximum size is 5MB.`
         );
         continue;
       }
 
-      if (
-        !ACCEPTED_TYPES.includes(
-          file.type
-        )
-      ) {
+      if (!ACCEPTED_TYPES.includes(file.type)) {
         alert(
           `${file.name} is not a valid image. Use JPG, PNG, or WebP.`
         );
@@ -454,24 +471,10 @@ function ImageUpload({
       }
 
       try {
-        const formData =
-          new FormData();
+        const formData = new FormData();
 
-        formData.append(
-          "file",
-          file
-        );
+        formData.append("file", file);
 
-        /*
-         * Cloudinary folder structure:
-         *
-         * supervisors-of-india/
-         *   profile/
-         *   portfolio/
-         *
-         * The preset's Asset folder is:
-         * supervisors-of-india
-         */
         const uploadFolder =
           `supervisors-of-india/${folder}/${uid}`;
 
@@ -485,17 +488,15 @@ function ImageUpload({
           uploadFolder
         );
 
-        const response =
-          await fetch(
-            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-            {
-              method: "POST",
-              body: formData,
-            }
-          );
+        const response = await fetch(
+          `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
 
-        const result =
-          await response.json();
+        const result = await response.json();
 
         if (!response.ok) {
           throw new Error(
@@ -510,18 +511,14 @@ function ImageUpload({
           );
         }
 
-        uploadedUrls.push(
-          result.secure_url
-        );
+        uploadedUrls.push(result.secure_url);
 
         const percent =
           ((i + 1) /
             filesToUpload.length) *
           100;
 
-        setProgress(
-          Math.round(percent)
-        );
+        setProgress(Math.round(percent));
       } catch (error) {
         console.error(
           "Cloudinary upload error:",
@@ -534,9 +531,7 @@ function ImageUpload({
       }
     }
 
-    if (
-      uploadedUrls.length > 0
-    ) {
+    if (uploadedUrls.length > 0) {
       onChange([
         ...images,
         ...uploadedUrls,
@@ -551,13 +546,9 @@ function ImageUpload({
     }
   };
 
-  const removeImage = (
-    url: string
-  ) => {
+  const removeImage = (url: string) => {
     onChange(
-      images.filter(
-        (img) => img !== url
-      )
+      images.filter((img) => img !== url)
     );
   };
 
@@ -598,19 +589,14 @@ function ImageUpload({
         </div>
       )}
 
-      {images.length <
-        maxFiles && (
+      {images.length < maxFiles && (
         <div>
           <input
             ref={inputRef}
             type="file"
             accept="image/jpeg,image/png,image/webp"
-            multiple={
-              maxFiles > 1
-            }
-            onChange={
-              handleFileSelect
-            }
+            multiple={maxFiles > 1}
+            onChange={handleFileSelect}
             className="hidden"
           />
 
@@ -632,8 +618,7 @@ function ImageUpload({
                 <Loader2 className="h-6 w-6 text-accent animate-spin" />
 
                 <span className="text-sm font-medium text-accent">
-                  Uploading...{" "}
-                  {progress}%
+                  Uploading... {progress}%
                 </span>
               </>
             ) : (
@@ -642,17 +627,12 @@ function ImageUpload({
 
                 <span className="text-sm font-medium text-secondary-text">
                   Click to upload image
-                  {maxFiles >
-                  1
-                    ? "s"
-                    : ""}
+                  {maxFiles > 1 ? "s" : ""}
                 </span>
 
                 <span className="text-xs text-secondary-text/60">
-                  JPG, PNG, WebP up to
-                  5MB
-                  {maxFiles >
-                  1
+                  JPG, PNG, WebP up to 5MB
+                  {maxFiles > 1
                     ? ` • ${images.length}/${maxFiles} uploaded`
                     : ""}
                 </span>
@@ -670,8 +650,7 @@ function ImageUpload({
 ───────────────────────────────────────────── */
 
 export default function ProfessionalForm() {
-  const router =
-    useRouter();
+  const router = useRouter();
 
   const {
     user,
@@ -685,8 +664,7 @@ export default function ProfessionalForm() {
   const [submitError, setSubmitError] =
     useState<string | null>(null);
 
-  const [step, setStep] =
-    useState(0);
+  const [step, setStep] = useState(0);
 
   const [profilePhoto, setProfilePhoto] =
     useState<string>(
@@ -697,8 +675,7 @@ export default function ProfessionalForm() {
 
   const [portfolioPhotos, setPortfolioPhotos] =
     useState<string[]>(
-      profile?.portfolioPhotos ||
-        []
+      profile?.portfolioPhotos || []
     );
 
   const {
@@ -707,96 +684,95 @@ export default function ProfessionalForm() {
     watch,
     setValue,
     getValues,
-    formState: {
-      errors,
+    formState: { errors },
+  } = useForm<OnboardingFormData>({
+    resolver: zodResolver(
+      onboardingSchema
+    ),
+
+    defaultValues: {
+      displayName:
+        user?.displayName ||
+        profile?.displayName ||
+        "",
+
+      email:
+        user?.email ||
+        profile?.email ||
+        "",
+
+      phone:
+        profile?.phone ||
+        "",
+
+      city:
+        profile?.city ||
+        "",
+
+      professionalType:
+        profile?.professionalType ||
+        "",
+
+      professionalTypeOther:
+        (profile as any)?.professionalTypeOther ||
+        "",
+
+      specialization:
+        profile?.specialization ||
+        "",
+
+      specializationOther:
+        (profile as any)?.specializationOther ||
+        "",
+
+      experienceYears:
+        profile?.experienceYears ||
+        0,
+
+      organization:
+        profile?.organization ||
+        "",
+
+      qualifications:
+        profile?.qualifications ||
+        [],
+
+      certifications:
+        profile?.certifications ||
+        [],
+
+      areasOfExpertise:
+        profile?.areasOfExpertise ||
+        [],
+
+      bio:
+        profile?.bio ||
+        "",
+
+      linkedinUrl:
+        profile?.linkedinUrl ||
+        "",
+
+      portfolioUrl:
+        profile?.portfolioUrl ||
+        "",
     },
-  } =
-    useForm<OnboardingFormData>({
-      resolver:
-        zodResolver(
-          onboardingSchema
-        ),
-
-      defaultValues: {
-        displayName:
-          user?.displayName ||
-          profile?.displayName ||
-          "",
-
-        email:
-          user?.email ||
-          profile?.email ||
-          "",
-
-        phone:
-          profile?.phone ||
-          "",
-
-        city:
-          profile?.city ||
-          "",
-
-        professionalType:
-          profile?.professionalType ||
-          "",
-
-        specialization:
-          profile?.specialization ||
-          "",
-
-        experienceYears:
-          profile?.experienceYears ||
-          0,
-
-        organization:
-          profile?.organization ||
-          "",
-
-        qualifications:
-          profile?.qualifications ||
-          [],
-
-        certifications:
-          profile?.certifications ||
-          [],
-
-        areasOfExpertise:
-          profile?.areasOfExpertise ||
-          [],
-
-        bio:
-          profile?.bio ||
-          "",
-
-        linkedinUrl:
-          profile?.linkedinUrl ||
-          "",
-
-        portfolioUrl:
-          profile?.portfolioUrl ||
-          "",
-      },
-    });
+  });
 
   const selectedType =
-    watch(
-      "professionalType"
-    );
+    watch("professionalType");
+
+  const selectedSpecialization =
+    watch("specialization");
 
   const qualifications =
-    watch(
-      "qualifications"
-    ) || [];
+    watch("qualifications") || [];
 
   const certifications =
-    watch(
-      "certifications"
-    ) || [];
+    watch("certifications") || [];
 
   const areasOfExpertise =
-    watch(
-      "areasOfExpertise"
-    ) || [];
+    watch("areasOfExpertise") || [];
 
   /* ─────────────────────────────────────────
      SUBMIT
@@ -816,12 +792,11 @@ export default function ProfessionalForm() {
     setSubmitError(null);
 
     try {
-      const profileRef =
-        doc(
-          db,
-          "professionals",
-          user.uid
-        );
+      const profileRef = doc(
+        db,
+        "professionals",
+        user.uid
+      );
 
       const payload = {
         uid: user.uid,
@@ -843,46 +818,47 @@ export default function ProfessionalForm() {
         professionalType:
           data.professionalType,
 
+        professionalTypeOther:
+          data.professionalType === "Other"
+            ? data.professionalTypeOther?.trim() || ""
+            : "",
+
         specialization:
           data.specialization,
+
+        specializationOther:
+          data.specialization === "Other"
+            ? data.specializationOther?.trim() || ""
+            : "",
 
         experienceYears:
           data.experienceYears,
 
         organization:
-          data.organization ||
-          "",
+          data.organization || "",
 
         qualifications:
           data.qualifications,
 
         certifications:
-          data.certifications ||
-          [],
+          data.certifications || [],
 
         areasOfExpertise:
-          data.areasOfExpertise ||
-          [],
+          data.areasOfExpertise || [],
 
         bio: data.bio,
 
         linkedinUrl:
-          data.linkedinUrl ||
-          "",
+          data.linkedinUrl || "",
 
         portfolioUrl:
-          data.portfolioUrl ||
-          "",
+          data.portfolioUrl || "",
 
         portfolioPhotos:
           portfolioPhotos,
 
         profileCompleted: true,
 
-        /*
-         * New profiles start as pending.
-         * Your admin can later approve them.
-         */
         status: "pending",
 
         updatedAt:
@@ -920,127 +896,119 @@ export default function ProfessionalForm() {
      FINAL VALIDATION
   ───────────────────────────────────────── */
 
-  const handleFinalSubmit =
-    () => {
-      const values =
-        getValues();
+  const handleFinalSubmit = () => {
+    const values = getValues();
 
-      if (
-        !values.displayName ||
-        values.displayName.trim()
-          .length < 2
-      ) {
-        setStep(0);
+    if (
+      !values.displayName ||
+      values.displayName.trim().length < 2
+    ) {
+      setStep(0);
+      setSubmitError(
+        "Full name is required."
+      );
+      return;
+    }
 
-        setSubmitError(
-          "Full name is required."
-        );
+    if (
+      !values.phone ||
+      values.phone.trim().length < 10
+    ) {
+      setStep(0);
+      setSubmitError(
+        "Phone number is required."
+      );
+      return;
+    }
 
-        return;
-      }
+    if (
+      !values.city ||
+      values.city.trim().length < 2
+    ) {
+      setStep(0);
+      setSubmitError(
+        "City is required."
+      );
+      return;
+    }
 
-      if (
-        !values.phone ||
-        values.phone.trim()
-          .length < 10
-      ) {
-        setStep(0);
+    if (!values.professionalType) {
+      setStep(1);
+      setSubmitError(
+        "Professional type is required."
+      );
+      return;
+    }
 
-        setSubmitError(
-          "Phone number is required."
-        );
+    if (
+      values.professionalType ===
+        "Other" &&
+      !values.professionalTypeOther?.trim()
+    ) {
+      setStep(1);
+      setSubmitError(
+        "Please enter your professional type."
+      );
+      return;
+    }
 
-        return;
-      }
+    if (!values.specialization) {
+      setStep(1);
+      setSubmitError(
+        "Specialization is required."
+      );
+      return;
+    }
 
-      if (
-        !values.city ||
-        values.city.trim()
-          .length < 2
-      ) {
-        setStep(0);
+    if (
+      values.specialization ===
+        "Other" &&
+      !values.specializationOther?.trim()
+    ) {
+      setStep(1);
+      setSubmitError(
+        "Please enter your specialization."
+      );
+      return;
+    }
 
-        setSubmitError(
-          "City is required."
-        );
+    if (
+      values.experienceYears ===
+        undefined ||
+      values.experienceYears === null ||
+      Number(values.experienceYears) < 0
+    ) {
+      setStep(1);
+      setSubmitError(
+        "Years of experience is required."
+      );
+      return;
+    }
 
-        return;
-      }
+    if (
+      !values.qualifications ||
+      values.qualifications.length === 0
+    ) {
+      setStep(2);
+      setSubmitError(
+        "At least one qualification is required."
+      );
+      return;
+    }
 
-      if (
-        !values.professionalType
-      ) {
-        setStep(1);
+    if (
+      !values.bio ||
+      values.bio.trim().length < 50
+    ) {
+      setStep(3);
+      setSubmitError(
+        "Professional bio must be at least 50 characters."
+      );
+      return;
+    }
 
-        setSubmitError(
-          "Professional type is required."
-        );
-
-        return;
-      }
-
-      if (
-        !values.specialization
-      ) {
-        setStep(1);
-
-        setSubmitError(
-          "Specialization is required."
-        );
-
-        return;
-      }
-
-      if (
-        values.experienceYears ===
-          undefined ||
-        values.experienceYears ===
-          null ||
-        Number(
-          values.experienceYears
-        ) < 0
-      ) {
-        setStep(1);
-
-        setSubmitError(
-          "Years of experience is required."
-        );
-
-        return;
-      }
-
-      if (
-        !values.qualifications ||
-        values.qualifications
-          .length === 0
-      ) {
-        setStep(2);
-
-        setSubmitError(
-          "At least one qualification is required."
-        );
-
-        return;
-      }
-
-      if (
-        !values.bio ||
-        values.bio.trim()
-          .length < 50
-      ) {
-        setStep(3);
-
-        setSubmitError(
-          "Professional bio must be at least 50 characters."
-        );
-
-        return;
-      }
-
-      handleSubmit(
-        onSubmit
-      )();
-    };
+    handleSubmit(onSubmit)();
+  };
 
   const sections = [
     {
@@ -1049,20 +1017,17 @@ export default function ProfessionalForm() {
         "Your personal details",
     },
     {
-      title:
-        "Professional Information",
+      title: "Professional Information",
       description:
         "Your work expertise",
     },
     {
-      title:
-        "Qualifications & Expertise",
+      title: "Qualifications & Expertise",
       description:
         "Your skills and background",
     },
     {
-      title:
-        "About & Online Presence",
+      title: "About & Online Presence",
       description:
         "Tell us more about yourself",
     },
@@ -1100,7 +1065,6 @@ export default function ProfessionalForm() {
                   }
                   className={cn(
                     "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-colors",
-
                     i <= step
                       ? "bg-accent text-white"
                       : "bg-light-gray text-secondary-text"
@@ -1116,15 +1080,12 @@ export default function ProfessionalForm() {
                 <span
                   className={cn(
                     "text-xs font-medium hidden sm:block",
-
                     i <= step
                       ? "text-text"
                       : "text-secondary-text"
                   )}
                 >
-                  {
-                    section.title
-                  }
+                  {section.title}
                 </span>
               </div>
             )
@@ -1134,9 +1095,7 @@ export default function ProfessionalForm() {
         <div className="h-1.5 bg-light-gray rounded-full overflow-hidden">
           <motion.div
             className="h-full bg-accent rounded-full"
-            initial={{
-              width: "0%",
-            }}
+            initial={{ width: "0%" }}
             animate={{
               width: `${
                 ((step + 1) /
@@ -1144,9 +1103,7 @@ export default function ProfessionalForm() {
                 100
               }%`,
             }}
-            transition={{
-              duration: 0.3,
-            }}
+            transition={{ duration: 0.3 }}
           />
         </div>
       </div>
@@ -1183,14 +1140,11 @@ export default function ProfessionalForm() {
               </label>
 
               <div className="flex items-center gap-4">
-
                 <div className="relative w-24 h-24 rounded-2xl overflow-hidden bg-light-gray border border-border/50 shrink-0">
 
                   {profilePhoto ? (
                     <Image
-                      src={
-                        profilePhoto
-                      }
+                      src={profilePhoto}
                       alt="Profile"
                       fill
                       className="object-cover"
@@ -1205,33 +1159,23 @@ export default function ProfessionalForm() {
                 </div>
 
                 <div className="flex-1">
-
                   <ImageUpload
                     label=""
                     images={
                       profilePhoto
-                        ? [
-                            profilePhoto,
-                          ]
+                        ? [profilePhoto]
                         : []
                     }
-                    onChange={(
-                      urls
-                    ) =>
+                    onChange={(urls) =>
                       setProfilePhoto(
-                        urls[0] ||
-                          ""
+                        urls[0] || ""
                       )
                     }
                     maxFiles={1}
                     folder="profile"
-                    uid={
-                      user.uid
-                    }
+                    uid={user.uid}
                   />
-
                 </div>
-
               </div>
 
               <p className="text-xs text-secondary-text/70 mt-2">
@@ -1251,13 +1195,10 @@ export default function ProfessionalForm() {
               </label>
 
               <input
-                {...register(
-                  "displayName"
-                )}
+                {...register("displayName")}
                 type="text"
                 className={cn(
                   "w-full px-4 py-3 rounded-2xl border bg-white text-sm outline-none transition-colors",
-
                   errors.displayName
                     ? "border-red-300 focus:border-red-400"
                     : "border-border focus:border-accent"
@@ -1267,11 +1208,7 @@ export default function ProfessionalForm() {
 
               {errors.displayName && (
                 <p className="text-xs text-red-500 mt-1.5">
-                  {
-                    errors
-                      .displayName
-                      .message
-                  }
+                  {errors.displayName.message}
                 </p>
               )}
             </div>
@@ -1287,9 +1224,7 @@ export default function ProfessionalForm() {
               </label>
 
               <input
-                {...register(
-                  "email"
-                )}
+                {...register("email")}
                 type="email"
                 readOnly
                 className="w-full px-4 py-3 rounded-2xl border border-border bg-light-gray text-sm text-secondary-text cursor-not-allowed outline-none"
@@ -1311,13 +1246,10 @@ export default function ProfessionalForm() {
               </label>
 
               <input
-                {...register(
-                  "phone"
-                )}
+                {...register("phone")}
                 type="tel"
                 className={cn(
                   "w-full px-4 py-3 rounded-2xl border bg-white text-sm outline-none transition-colors",
-
                   errors.phone
                     ? "border-red-300 focus:border-red-400"
                     : "border-border focus:border-accent"
@@ -1327,10 +1259,7 @@ export default function ProfessionalForm() {
 
               {errors.phone && (
                 <p className="text-xs text-red-500 mt-1.5">
-                  {
-                    errors.phone
-                      .message
-                  }
+                  {errors.phone.message}
                 </p>
               )}
             </div>
@@ -1346,13 +1275,10 @@ export default function ProfessionalForm() {
               </label>
 
               <input
-                {...register(
-                  "city"
-                )}
+                {...register("city")}
                 type="text"
                 className={cn(
                   "w-full px-4 py-3 rounded-2xl border bg-white text-sm outline-none transition-colors",
-
                   errors.city
                     ? "border-red-300 focus:border-red-400"
                     : "border-border focus:border-accent"
@@ -1362,10 +1288,7 @@ export default function ProfessionalForm() {
 
               {errors.city && (
                 <p className="text-xs text-red-500 mt-1.5">
-                  {
-                    errors.city
-                      .message
-                  }
+                  {errors.city.message}
                 </p>
               )}
             </div>
@@ -1407,11 +1330,25 @@ export default function ProfessionalForm() {
 
               <select
                 {...register(
-                  "professionalType"
+                  "professionalType",
+                  {
+                    onChange: () => {
+                      setValue(
+                        "specialization",
+                        ""
+                      );
+
+                      setValue(
+                        "specializationOther",
+                        ""
+                      );
+
+                      setSubmitError(null);
+                    },
+                  }
                 )}
                 className={cn(
                   "w-full px-4 py-3 rounded-2xl border bg-white text-sm outline-none appearance-none transition-colors",
-
                   errors.professionalType
                     ? "border-red-300 focus:border-red-400"
                     : "border-border focus:border-accent"
@@ -1436,13 +1373,61 @@ export default function ProfessionalForm() {
               {errors.professionalType && (
                 <p className="text-xs text-red-500 mt-1.5">
                   {
-                    errors
-                      .professionalType
+                    errors.professionalType
                       .message
                   }
                 </p>
               )}
             </div>
+
+            {/* Custom Professional Type */}
+
+            {selectedType === "Other" && (
+              <motion.div
+                initial={{
+                  opacity: 0,
+                  height: 0,
+                  y: -8,
+                }}
+                animate={{
+                  opacity: 1,
+                  height: "auto",
+                  y: 0,
+                }}
+                className="overflow-hidden"
+              >
+                <label className="block text-sm font-semibold text-text mb-2">
+                  Enter Your Professional Type{" "}
+                  <span className="text-red-500">
+                    *
+                  </span>
+                </label>
+
+                <input
+                  {...register(
+                    "professionalTypeOther"
+                  )}
+                  type="text"
+                  className={cn(
+                    "w-full px-4 py-3 rounded-2xl border bg-white text-sm outline-none transition-colors",
+                    errors.professionalTypeOther
+                      ? "border-red-300 focus:border-red-400"
+                      : "border-border focus:border-accent"
+                  )}
+                  placeholder="e.g. Construction Safety Specialist"
+                />
+
+                {errors.professionalTypeOther && (
+                  <p className="text-xs text-red-500 mt-1.5">
+                    {
+                      errors
+                        .professionalTypeOther
+                        .message
+                    }
+                  </p>
+                )}
+              </motion.div>
+            )}
 
             {/* Specialization */}
 
@@ -1458,16 +1443,12 @@ export default function ProfessionalForm() {
                 {...register(
                   "specialization"
                 )}
-                disabled={
-                  !selectedType
-                }
+                disabled={!selectedType}
                 className={cn(
                   "w-full px-4 py-3 rounded-2xl border bg-white text-sm outline-none appearance-none transition-colors",
-
                   errors.specialization
                     ? "border-red-300 focus:border-red-400"
                     : "border-border focus:border-accent",
-
                   !selectedType &&
                     "bg-light-gray cursor-not-allowed"
                 )}
@@ -1482,28 +1463,75 @@ export default function ProfessionalForm() {
                   SPECIALIZATIONS[
                     selectedType
                   ] || []
-                ).map(
-                  (spec) => (
-                    <option
-                      key={spec}
-                      value={spec}
-                    >
-                      {spec}
-                    </option>
-                  )
-                )}
+                ).map((spec) => (
+                  <option
+                    key={spec}
+                    value={spec}
+                  >
+                    {spec}
+                  </option>
+                ))}
               </select>
 
               {errors.specialization && (
                 <p className="text-xs text-red-500 mt-1.5">
                   {
-                    errors
-                      .specialization
+                    errors.specialization
                       .message
                   }
                 </p>
               )}
             </div>
+
+            {/* Custom Specialization */}
+
+            {selectedSpecialization ===
+              "Other" && (
+              <motion.div
+                initial={{
+                  opacity: 0,
+                  height: 0,
+                  y: -8,
+                }}
+                animate={{
+                  opacity: 1,
+                  height: "auto",
+                  y: 0,
+                }}
+                className="overflow-hidden"
+              >
+                <label className="block text-sm font-semibold text-text mb-2">
+                  Enter Your Specialization{" "}
+                  <span className="text-red-500">
+                    *
+                  </span>
+                </label>
+
+                <input
+                  {...register(
+                    "specializationOther"
+                  )}
+                  type="text"
+                  className={cn(
+                    "w-full px-4 py-3 rounded-2xl border bg-white text-sm outline-none transition-colors",
+                    errors.specializationOther
+                      ? "border-red-300 focus:border-red-400"
+                      : "border-border focus:border-accent"
+                  )}
+                  placeholder="e.g. Green Building Consulting"
+                />
+
+                {errors.specializationOther && (
+                  <p className="text-xs text-red-500 mt-1.5">
+                    {
+                      errors
+                        .specializationOther
+                        .message
+                    }
+                  </p>
+                )}
+              </motion.div>
+            )}
 
             {/* Experience */}
 
@@ -1524,7 +1552,6 @@ export default function ProfessionalForm() {
                 max={60}
                 className={cn(
                   "w-full px-4 py-3 rounded-2xl border bg-white text-sm outline-none transition-colors",
-
                   errors.experienceYears
                     ? "border-red-300 focus:border-red-400"
                     : "border-border focus:border-accent"
@@ -1584,7 +1611,6 @@ export default function ProfessionalForm() {
             }}
             className="space-y-6"
           >
-
             <TagInput
               label={
                 <>
@@ -1594,37 +1620,27 @@ export default function ProfessionalForm() {
                   </span>
                 </>
               }
-              tags={
-                qualifications
-              }
-              onChange={(
-                tags
-              ) =>
+              tags={qualifications}
+              onChange={(tags) =>
                 setValue(
                   "qualifications",
                   tags,
                   {
-                    shouldValidate:
-                      true,
+                    shouldValidate: true,
                   }
                 )
               }
               placeholder="e.g. B.Tech Civil, MBA Construction..."
               error={
-                errors
-                  .qualifications
+                errors.qualifications
                   ?.message
               }
             />
 
             <TagInput
               label="Certifications"
-              tags={
-                certifications
-              }
-              onChange={(
-                tags
-              ) =>
+              tags={certifications}
+              onChange={(tags) =>
                 setValue(
                   "certifications",
                   tags
@@ -1635,12 +1651,8 @@ export default function ProfessionalForm() {
 
             <TagInput
               label="Areas of Expertise"
-              tags={
-                areasOfExpertise
-              }
-              onChange={(
-                tags
-              ) =>
+              tags={areasOfExpertise}
+              onChange={(tags) =>
                 setValue(
                   "areasOfExpertise",
                   tags
@@ -1648,7 +1660,6 @@ export default function ProfessionalForm() {
               }
               placeholder="e.g. High-rise, Green Building, Renovation..."
             />
-
           </motion.div>
         )}
 
@@ -1685,13 +1696,10 @@ export default function ProfessionalForm() {
               </label>
 
               <textarea
-                {...register(
-                  "bio"
-                )}
+                {...register("bio")}
                 rows={5}
                 className={cn(
                   "w-full px-4 py-3 rounded-2xl border bg-white text-sm outline-none resize-none transition-colors",
-
                   errors.bio
                     ? "border-red-300 focus:border-red-400"
                     : "border-border focus:border-accent"
@@ -1702,11 +1710,7 @@ export default function ProfessionalForm() {
               <div className="flex justify-between mt-1.5">
                 {errors.bio ? (
                   <p className="text-xs text-red-500">
-                    {
-                      errors
-                        .bio
-                        .message
-                    }
+                    {errors.bio.message}
                   </p>
                 ) : (
                   <span />
@@ -1722,9 +1726,7 @@ export default function ProfessionalForm() {
 
             <ImageUpload
               label="Work Portfolio Photos"
-              images={
-                portfolioPhotos
-              }
+              images={portfolioPhotos}
               onChange={
                 setPortfolioPhotos
               }
@@ -1747,7 +1749,6 @@ export default function ProfessionalForm() {
                 type="url"
                 className={cn(
                   "w-full px-4 py-3 rounded-2xl border bg-white text-sm outline-none transition-colors",
-
                   errors.linkedinUrl
                     ? "border-red-300 focus:border-red-400"
                     : "border-border focus:border-accent"
@@ -1758,8 +1759,7 @@ export default function ProfessionalForm() {
               {errors.linkedinUrl && (
                 <p className="text-xs text-red-500 mt-1.5">
                   {
-                    errors
-                      .linkedinUrl
+                    errors.linkedinUrl
                       .message
                   }
                 </p>
@@ -1780,7 +1780,6 @@ export default function ProfessionalForm() {
                 type="url"
                 className={cn(
                   "w-full px-4 py-3 rounded-2xl border bg-white text-sm outline-none transition-colors",
-
                   errors.portfolioUrl
                     ? "border-red-300 focus:border-red-400"
                     : "border-border focus:border-accent"
@@ -1791,8 +1790,7 @@ export default function ProfessionalForm() {
               {errors.portfolioUrl && (
                 <p className="text-xs text-red-500 mt-1.5">
                   {
-                    errors
-                      .portfolioUrl
+                    errors.portfolioUrl
                       .message
                   }
                 </p>
@@ -1844,12 +1842,8 @@ export default function ProfessionalForm() {
           type="button"
           variant="ghost"
           onClick={() =>
-            setStep(
-              (s) =>
-                Math.max(
-                  0,
-                  s - 1
-                )
+            setStep((s) =>
+              Math.max(0, s - 1)
             )
           }
           disabled={step === 0}
@@ -1857,19 +1851,13 @@ export default function ProfessionalForm() {
           Back
         </Button>
 
-        {step <
-        sections.length - 1 ? (
+        {step < sections.length - 1 ? (
           <Button
             type="button"
             onClick={() => {
-              setSubmitError(
-                null
-              );
+              setSubmitError(null);
 
-              setStep(
-                (s) =>
-                  s + 1
-              );
+              setStep((s) => s + 1);
             }}
             className="group"
           >
@@ -1880,12 +1868,8 @@ export default function ProfessionalForm() {
         ) : (
           <Button
             type="button"
-            onClick={
-              handleFinalSubmit
-            }
-            isLoading={
-              submitting
-            }
+            onClick={handleFinalSubmit}
+            isLoading={submitting}
             className="group"
           >
             {submitting
@@ -1901,4 +1885,4 @@ export default function ProfessionalForm() {
       </div>
     </div>
   );
-}      
+}
