@@ -89,7 +89,6 @@ export default function MembershipCard({
               highlighted ? "text-white/50" : "text-secondary-text"
             )}
           >
-            /forever
           </span>
         )}
       </div>

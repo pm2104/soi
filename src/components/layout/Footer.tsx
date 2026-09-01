@@ -13,7 +13,7 @@ export default function Footer() {
             <div className="flex items-center gap-3 mb-6">
               <div className="flex items-center justify-center">
                 <Image
-                  src="https://res.cloudinary.com/qii92ztd/image/upload/v1786942606/file_000000002058720688cf7bdd4213f595.png"
+                  src="https://res.cloudinary.com/qii92ztd/image/upload/v1786942590/file_000000007e2481fbaae3eed33fdeda01.png"
                   alt="Supervisors of India"
                   width={56}
                   height={56}
@@ -26,7 +26,7 @@ export default function Footer() {
                   SUPERVISORS OF INDIA
                 </h3>
 
-                <p className="text-xs text-white/50 tracking-widest uppercase">
+                <p className="text-xs text-[rgb(67,160,71)] tracking-widest uppercase">
                   Connect • Collaborate • Construct
                 </p>
               </div>
@@ -34,8 +34,7 @@ export default function Footer() {
 
             <p className="text-white/60 text-sm leading-relaxed mb-6 max-w-sm">
               India's most trusted marketplace connecting construction
-              professionals with clients. Building the future, one project at
-              a time.
+              professionals with clients.
             </p>
 
             <div className="space-y-3">
@@ -104,8 +103,25 @@ export default function Footer() {
               Platform
             </h4>
 
-            <ul className="space-y-3">
+            <ul className="space-y-3 mb-8">
               {FOOTER_LINKS.platform.map((link) => (
+                <li key={link.label}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-white/60 hover:text-accent transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            
+            <h4 className="font-bold text-sm uppercase tracking-wider mb-4">
+              Account
+            </h4>
+
+            <ul className="space-y-3">
+              {FOOTER_LINKS.account.map((link) => (
                 <li key={link.label}>
                   <Link
                     href={link.href}

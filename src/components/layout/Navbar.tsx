@@ -26,7 +26,7 @@ export default function Navbar() {
           <Link href="/" className="flex items-center gap-3">
             <div className="flex items-center justify-center">
               <Image
-                src="https://res.cloudinary.com/qii92ztd/image/upload/v1786942606/file_000000002058720688cf7bdd4213f595.png"
+                src="https://res.cloudinary.com/qii92ztd/image/upload/v1786942590/file_000000007e2481fbaae3eed33fdeda01.png"
                 alt="Supervisors of India"
                 width={56}
                 height={56}

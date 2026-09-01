@@ -69,12 +69,15 @@ export const MEMBERSHIP_TIERS = [
     price: "Custom",
     description: "Full access to all platform features",
     features: [
-      "All Registered features",
-      "Dedicated account manager",
+      "All registered features",
+      "Browse all profiles",
+      "Send unlimited inquiries",
+      "Direct messaging",
       "Contract assistance",
       "Priority matching",
       "Analytics dashboard",
       "API access",
+      "Start project with professionals",
     ],
     cta: "Contact Sales",
     highlighted: false,
@@ -100,7 +103,7 @@ export const HOW_IT_WORKS_STEPS = [
     step: 3,
     title: "Start Building",
     description:
-      "Connect directly, discuss your project, and begin construction with confidence and transparency.",
+      "Connect directly, agree on terms, discuss your project, and begin construction with confidence and transparency.",
     icon: "Hammer",
   },
 ];
@@ -202,6 +205,11 @@ export const FOOTER_LINKS = {
     { label: "Pricing", href: "#membership" },
     { label: "Professionals", href: "#professionals" },
     { label: "Categories", href: "#categories" },
+  ],
+  account: [
+    { label: "Sign In", href: "#" },
+    { label: "Join as Professional", href: "#how-it-works" },
+    { label: "Hire Professional", href: "#membership" },
   ],
   legal: [
     { label: "Privacy Policy", href: "#" },
