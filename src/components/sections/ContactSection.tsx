@@ -7,85 +7,155 @@ type Status = {
   message: string;
 };
 
+type FormData = {
+  fullName: string;
+  email: string;
+  phone: string;
+  message: string;
+};
+
+type FormErrors = {
+  fullName?: string;
+  email?: string;
+  phone?: string;
+  message?: string;
+};
+
+const validateClient = (data: FormData): FormErrors => {
+  const errors: FormErrors = {};
+
+  if (!data.fullName.trim()) {
+    errors.fullName = "Full name is required.";
+  }
+
+  if (!data.email.trim()) {
+    errors.email = "Email address is required.";
+  } else if (
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())
+  ) {
+    errors.email = "Please enter a valid email address.";
+  }
+
+  if (!data.phone.trim()) {
+    errors.phone = "Phone number is required.";
+  }
+
+  if (!data.message.trim()) {
+    errors.message = "Message is required.";
+  }
+
+  return errors;
+};
+
 export default function ContactSection() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [formData, setFormData] = useState<FormData>({
+    fullName: "",
+    email: "",
+    phone: "",
+    message: "",
+  });
+
+  const [errors, setErrors] = useState<FormErrors>({});
+
   const [status, setStatus] = useState<Status>({
     type: null,
     message: "",
   });
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
+      [name]: undefined,
+    }));
+
+    if (status.type) {
+      setStatus({
+        type: null,
+        message: "",
+      });
+    }
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const validationErrors = validateClient(formData);
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
 
     setIsSubmitting(true);
+    setErrors({});
 
     setStatus({
       type: null,
       message: "",
     });
 
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-
-    const name = String(formData.get("name") || "").trim();
-    const email = String(formData.get("email") || "").trim();
-    const phone = String(formData.get("phone") || "").trim();
-    const message = String(formData.get("message") || "").trim();
-
-    // Basic client-side validation
-    if (!name || !email || !phone || !message) {
-      setStatus({
-        type: "error",
-        message: "Please fill in all required fields.",
-      });
-
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!emailRegex.test(email)) {
-      setStatus({
-        type: "error",
-        message: "Please enter a valid email address.",
-      });
-
-      setIsSubmitting(false);
-      return;
-    }
-
     try {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          phone,
+      const response = await fetch(
+        "https://formspree.io/f/mbgjojjr",
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            fullName: formData.fullName.trim(),
+            email: formData.email.trim(),
+            phone: formData.phone.trim(),
+            message: formData.message.trim(),
+          }),
+        }
+      );
+
+      if (response.ok) {
+        setStatus({
+          type: "success",
+          message:
+            "Thank you! Your message has been sent successfully. We'll get back to you soon.",
+        });
+
+        setFormData({
+          fullName: "",
+          email: "",
+          phone: "",
+          message: "",
+        });
+      } else {
+        let message =
+          "Something went wrong. Please try again or contact us directly at info@soiglobal.in.";
+
+        try {
+          const data = await response.json();
+
+          if (data?.error) {
+            message = data.error;
+          }
+        } catch {
+          // Use default error message
+        }
+
+        setStatus({
+          type: "error",
           message,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data?.message || "Something went wrong.");
+        });
       }
-
-      setStatus({
-        type: "success",
-        message:
-          "Thank you! Your message has been sent successfully. Our team will get back to you soon.",
-      });
-
-      form.reset();
-    } catch (error) {
-      console.error("Contact form error:", error);
-
+    } catch {
       setStatus({
         type: "error",
         message:
@@ -94,15 +164,13 @@ export default function ContactSection() {
     } finally {
       setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <section className="bg-[#f8f9fb] px-6 py-16 sm:py-20 lg:py-24">
       <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-2 lg:gap-20">
-        {/* ================================================================
-            LEFT — CONTACT INFORMATION
-        ================================================================ */}
 
+        {/* LEFT — CONTACT INFORMATION */}
         <div className="pt-1">
           <h2 className="text-3xl font-bold tracking-tight text-[#0d1b41] sm:text-4xl">
             Get in Touch
@@ -114,10 +182,8 @@ export default function ContactSection() {
           </p>
 
           <div className="mt-10 space-y-7">
-            {/* ============================================================
-                OFFICE ADDRESS
-            ============================================================ */}
 
+            {/* OFFICE ADDRESS */}
             <ContactInfo
               icon={<LocationIcon />}
               title="Office Address"
@@ -130,10 +196,7 @@ export default function ContactSection() {
               }
             />
 
-            {/* ============================================================
-                WHATSAPP
-            ============================================================ */}
-
+            {/* WHATSAPP */}
             <ContactInfo
               icon={<WhatsAppIcon />}
               title="WhatsApp"
@@ -142,58 +205,61 @@ export default function ContactSection() {
               external
             />
 
-            {/* ============================================================
-                EMAIL
-            ============================================================ */}
-
+            {/* EMAIL */}
             <ContactInfo
               icon={<EmailIcon />}
               title="Email"
               content="info@soiglobal.in"
               href="mailto:info@soiglobal.in"
             />
+
           </div>
         </div>
 
-        {/* ================================================================
-            RIGHT — CONTACT FORM
-        ================================================================ */}
-
+        {/* RIGHT — CONTACT FORM */}
         <div className="rounded-2xl border border-[#e5e8ee] bg-white p-7 shadow-sm sm:p-9 lg:p-10">
+
           <h2 className="text-3xl font-bold tracking-tight text-[#0d1b41]">
             Send a Message
           </h2>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-            {/* ==========================================================
-                FULL NAME
-            ========================================================== */}
 
+            {/* FULL NAME */}
             <div>
               <label
-                htmlFor="name"
+                htmlFor="fullName"
                 className="mb-2 block text-sm font-semibold text-[#0d1b41]"
               >
                 Full Name
               </label>
 
               <input
-                id="name"
-                name="name"
+                id="fullName"
+                name="fullName"
                 type="text"
                 placeholder="Your name"
                 autoComplete="name"
                 required
                 disabled={isSubmitting}
                 maxLength={100}
-                className="w-full rounded-xl border border-[#dfe4eb] bg-white px-5 py-4 text-[#0d1b41] outline-none transition placeholder:text-[#91a0b5] focus:border-[#4caf50] focus:ring-2 focus:ring-[#4caf50]/20 disabled:cursor-not-allowed disabled:bg-gray-50"
+                value={formData.fullName}
+                onChange={handleChange}
+                className={`w-full rounded-xl border ${
+                  errors.fullName
+                    ? "border-red-400 focus:border-red-500 focus:ring-red-500/20"
+                    : "border-[#dfe4eb] focus:border-[#4caf50] focus:ring-[#4caf50]/20"
+                } bg-white px-5 py-4 text-[#0d1b41] outline-none transition placeholder:text-[#91a0b5] focus:ring-2 disabled:cursor-not-allowed disabled:bg-gray-50`}
               />
+
+              {errors.fullName && (
+                <p className="mt-2 text-sm text-red-600">
+                  {errors.fullName}
+                </p>
+              )}
             </div>
 
-            {/* ==========================================================
-                EMAIL
-            ========================================================== */}
-
+            {/* EMAIL */}
             <div>
               <label
                 htmlFor="email"
@@ -211,14 +277,23 @@ export default function ContactSection() {
                 required
                 disabled={isSubmitting}
                 maxLength={150}
-                className="w-full rounded-xl border border-[#dfe4eb] bg-white px-5 py-4 text-[#0d1b41] outline-none transition placeholder:text-[#91a0b5] focus:border-[#4caf50] focus:ring-2 focus:ring-[#4caf50]/20 disabled:cursor-not-allowed disabled:bg-gray-50"
+                value={formData.email}
+                onChange={handleChange}
+                className={`w-full rounded-xl border ${
+                  errors.email
+                    ? "border-red-400 focus:border-red-500 focus:ring-red-500/20"
+                    : "border-[#dfe4eb] focus:border-[#4caf50] focus:ring-[#4caf50]/20"
+                } bg-white px-5 py-4 text-[#0d1b41] outline-none transition placeholder:text-[#91a0b5] focus:ring-2 disabled:cursor-not-allowed disabled:bg-gray-50`}
               />
+
+              {errors.email && (
+                <p className="mt-2 text-sm text-red-600">
+                  {errors.email}
+                </p>
+              )}
             </div>
 
-            {/* ==========================================================
-                PHONE
-            ========================================================== */}
-
+            {/* PHONE */}
             <div>
               <label
                 htmlFor="phone"
@@ -236,14 +311,23 @@ export default function ContactSection() {
                 required
                 disabled={isSubmitting}
                 maxLength={20}
-                className="w-full rounded-xl border border-[#dfe4eb] bg-white px-5 py-4 text-[#0d1b41] outline-none transition placeholder:text-[#91a0b5] focus:border-[#4caf50] focus:ring-2 focus:ring-[#4caf50]/20 disabled:cursor-not-allowed disabled:bg-gray-50"
+                value={formData.phone}
+                onChange={handleChange}
+                className={`w-full rounded-xl border ${
+                  errors.phone
+                    ? "border-red-400 focus:border-red-500 focus:ring-red-500/20"
+                    : "border-[#dfe4eb] focus:border-[#4caf50] focus:ring-[#4caf50]/20"
+                } bg-white px-5 py-4 text-[#0d1b41] outline-none transition placeholder:text-[#91a0b5] focus:ring-2 disabled:cursor-not-allowed disabled:bg-gray-50`}
               />
+
+              {errors.phone && (
+                <p className="mt-2 text-sm text-red-600">
+                  {errors.phone}
+                </p>
+              )}
             </div>
 
-            {/* ==========================================================
-                MESSAGE
-            ========================================================== */}
-
+            {/* MESSAGE */}
             <div>
               <label
                 htmlFor="message"
@@ -260,14 +344,23 @@ export default function ContactSection() {
                 required
                 disabled={isSubmitting}
                 maxLength={2000}
-                className="w-full resize-none rounded-xl border border-[#dfe4eb] bg-white px-5 py-4 text-[#0d1b41] outline-none transition placeholder:text-[#91a0b5] focus:border-[#4caf50] focus:ring-2 focus:ring-[#4caf50]/20 disabled:cursor-not-allowed disabled:bg-gray-50"
+                value={formData.message}
+                onChange={handleChange}
+                className={`w-full resize-none rounded-xl border ${
+                  errors.message
+                    ? "border-red-400 focus:border-red-500 focus:ring-red-500/20"
+                    : "border-[#dfe4eb] focus:border-[#4caf50] focus:ring-[#4caf50]/20"
+                } bg-white px-5 py-4 text-[#0d1b41] outline-none transition placeholder:text-[#91a0b5] focus:ring-2 disabled:cursor-not-allowed disabled:bg-gray-50`}
               />
+
+              {errors.message && (
+                <p className="mt-2 text-sm text-red-600">
+                  {errors.message}
+                </p>
+              )}
             </div>
 
-            {/* ==========================================================
-                SUCCESS / ERROR MESSAGE
-            ========================================================== */}
-
+            {/* SUCCESS / ERROR */}
             {status.type && (
               <div
                 role="alert"
@@ -282,10 +375,7 @@ export default function ContactSection() {
               </div>
             )}
 
-            {/* ==========================================================
-                SUBMIT BUTTON
-            ========================================================== */}
-
+            {/* SUBMIT */}
             <button
               type="submit"
               disabled={isSubmitting}
@@ -293,6 +383,7 @@ export default function ContactSection() {
             >
               {isSubmitting ? "Sending..." : "Send Message"}
             </button>
+
           </form>
         </div>
       </div>
@@ -319,13 +410,10 @@ function ContactInfo({
 }) {
   return (
     <div className="flex items-start gap-5">
-      {/* Icon */}
 
       <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#0d1b41] text-[#4caf50]">
         {icon}
       </div>
-
-      {/* Content */}
 
       <div className="pt-1">
         <h3 className="text-lg font-bold text-[#0d1b41]">
@@ -414,3 +502,4 @@ function EmailIcon() {
     </svg>
   );
 }
+
