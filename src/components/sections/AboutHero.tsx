@@ -64,7 +64,7 @@ export default function AboutHero() {
                 <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
-            <Link href="/#how-it-works">
+            <Link href="/how-it-works">
               <Button variant="outline" size="lg">
                 How It Works
               </Button>

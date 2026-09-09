@@ -87,7 +87,7 @@ export default function FAQSection() {
           className="mt-12 text-center"
         >
           <p className="text-secondary-text mb-4">Still have questions?</p>
-          <Link href="#contact">
+          <Link href="/contact-us">
             <Button variant="secondary" className="group">
               <MessageSquare className="h-4 w-4 mr-2" />
               Contact Support

@@ -57,16 +57,18 @@ export default function LaunchSection() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
           >
-            <JoinAsProfessionalButton
-              variant="primary"
-              size="lg"
-              showArrow
-            />
             <Link href="/hire-professional">
-              <Button variant="outline" size="lg">
+              <Button variant="primary" size="lg">
                 Hire Professional
               </Button>
             </Link>
+            
+            <JoinAsProfessionalButton
+              variant="outline"
+              size="lg"
+              showArrow
+            />
+            
           </motion.div>
         </div>
 

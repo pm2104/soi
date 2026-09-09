@@ -91,9 +91,9 @@ export default function Navbar() {
                   {authLoading ? "Signing in..." : "Sign In"}
                 </Button>
                 <Link href="/hire-professional">
-                  <Button variant="secondary" size="sm">Hire Professional</Button>
+                  <Button variant="primary" size="sm">Hire Professional</Button>
                 </Link>
-                <JoinAsProfessionalButton variant="primary" size="sm" />
+                <JoinAsProfessionalButton variant="secondary" size="sm" />
               </>
             )}
           </div>

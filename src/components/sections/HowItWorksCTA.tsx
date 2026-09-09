@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
+import JoinAsProfessionalButton from "@/components/auth/JoinAsProfessionalButton";
 
 export default function HowItWorksCTA() {
   return (
@@ -43,11 +44,11 @@ export default function HowItWorksCTA() {
                 <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
-            <Link href="/professional/onboarding">
-              <Button variant="outline" size="lg">
-                Join as Professional
-              </Button>
-            </Link>
+            <JoinAsProfessionalButton
+              variant="secondary"
+              size="lg"
+              showArrow
+            />
           </div>
 
           <p className="mt-6 text-sm text-white/40">
