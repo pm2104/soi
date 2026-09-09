@@ -2,6 +2,7 @@ import { Mail, MapPin } from "lucide-react";
 import { FOOTER_LINKS } from "@/lib/constants";
 import Link from "next/link";
 import Image from "next/image";
+import JoinAsProfessionalButton from "@/components/auth/JoinAsProfessionalButton";
 
 export default function Footer() {
   return (
@@ -116,6 +117,7 @@ export default function Footer() {
               ))}
             </ul>
             
+            {/* Account */}
             <h4 className="font-bold text-sm uppercase tracking-wider mb-4">
               Account
             </h4>
@@ -123,12 +125,20 @@ export default function Footer() {
             <ul className="space-y-3">
               {FOOTER_LINKS.account.map((link) => (
                 <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-white/60 hover:text-accent transition-colors"
-                  >
-                    {link.label}
-                  </Link>
+                  {link.label === "Join as Professional" ? (
+                    <JoinAsProfessionalButton
+                      variant="ghost"
+                      size="sm"
+                      className="!h-auto !min-h-0 !w-auto !p-0 !bg-transparent !border-0 !shadow-none !text-sm !font-normal !text-white/60 hover:!bg-transparent hover:!border-transparent hover:!shadow-none hover:!text-accent focus:!bg-transparent"
+                    />
+                  ) : (
+                    <Link
+                      href={link.href}
+                      className="text-sm text-white/60 hover:text-accent transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>

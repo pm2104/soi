@@ -6,6 +6,8 @@ import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import { STATS } from "@/lib/constants";
 import Link from "next/link";
+import JoinAsProfessionalButton from "@/components/auth/JoinAsProfessionalButton";
+
 export default function LaunchSection() {
   return (
     <section className="py-20 md:py-28 bg-navy relative overflow-hidden">
@@ -55,9 +57,11 @@ export default function LaunchSection() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
           >
-            <Link href="/hire-professional">
-              <Button size="lg">Join as Professional</Button>
-            </Link>
+            <JoinAsProfessionalButton
+              variant="primary"
+              size="lg"
+              showArrow
+            />
             <Link href="/hire-professional">
               <Button variant="outline" size="lg">
                 Hire Professional
