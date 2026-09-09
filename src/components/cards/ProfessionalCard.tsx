@@ -1,13 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Star, MapPin, Award, BadgeCheck } from "lucide-react";
+import { Star, MapPin, BadgeCheck } from "lucide-react";
 import Image from "next/image";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
-import Link from "next/link";
 
 interface ProfessionalCardProps {
+  uid: string;
   name: string;
   role: string;
   city: string;
@@ -16,9 +16,11 @@ interface ProfessionalCardProps {
   premium: boolean;
   verified: boolean;
   index: number;
+  onViewProfile: (uid: string) => void;
 }
 
 export default function ProfessionalCard({
+  uid,
   name,
   role,
   city,
@@ -27,6 +29,7 @@ export default function ProfessionalCard({
   premium,
   verified,
   index,
+  onViewProfile,
 }: ProfessionalCardProps) {
   return (
     <motion.div
@@ -44,7 +47,6 @@ export default function ProfessionalCard({
       <div className="flex items-start justify-between mb-4">
         <div className="relative">
           <div className="w-16 h-16 rounded-2xl overflow-hidden bg-light-gray">
-
             {avatar ? (
               <Image
                 src={avatar}
@@ -58,10 +60,9 @@ export default function ProfessionalCard({
                 {name.charAt(0).toUpperCase()}
               </div>
             )}
-
           </div>
 
-          {/* Green verified badge */}
+          {/* Verified badge */}
           {verified && (
             <div className="absolute -bottom-1 -right-1 bg-accent text-white p-1 rounded-lg">
               <BadgeCheck className="h-3 w-3" />
@@ -89,7 +90,6 @@ export default function ProfessionalCard({
 
       {/* Location + Experience */}
       <div className="flex items-center gap-4 text-xs text-secondary-text mb-4">
-
         <div className="flex items-center gap-1">
           <MapPin className="h-3.5 w-3.5" />
           <span>{city}</span>
@@ -99,21 +99,18 @@ export default function ProfessionalCard({
           <Star className="h-3.5 w-3.5 text-amber-500" />
           <span>{experience}</span>
         </div>
-
       </div>
 
       {/* View Profile */}
-      <Link href="/hire-professional">
-        <Button
-          variant="ghost"
-          size="sm"
-          fullWidth
-          className="mt-2"
-        >
-          View Profile
-        </Button>
-      </Link>
-      
+      <Button
+        variant="ghost"
+        size="sm"
+        fullWidth
+        className="mt-2"
+        onClick={() => onViewProfile(uid)}
+      >
+        View Profile
+      </Button>
     </motion.div>
   );
 }

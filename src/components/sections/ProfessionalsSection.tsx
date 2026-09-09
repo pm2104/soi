@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import {
   ChevronLeft,
@@ -12,6 +12,7 @@ import {
   getDocs,
   query,
   where,
+  limit,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
@@ -19,6 +20,9 @@ import ProfessionalCard from "@/components/cards/ProfessionalCard";
 import SectionHeading from "@/components/ui/SectionHeading";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import AuthModal from "@/components/marketplace/AuthModal";
+import { useAuth } from "@/lib/auth-context";
 
 interface Professional {
   uid: string;
@@ -32,10 +36,16 @@ interface Professional {
 }
 
 export default function ProfessionalsSection() {
+  const router = useRouter();
+  const { user } = useAuth();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authRedirect, setAuthRedirect] = useState<string | undefined>(
+    undefined
+  );
 
   useEffect(() => {
     const fetchProfessionals = async () => {
@@ -44,10 +54,17 @@ export default function ProfessionalsSection() {
 
         // Only request professionals that Firestore allows
         // the public to read.
-        const professionalsQuery = query(
+    const professionalsQuery = user
+      ? query(
           professionalsRef,
           where("status", "==", "approved"),
           where("profileCompleted", "==", true)
+        )
+      : query(
+          professionalsRef,
+          where("status", "==", "approved"),
+          where("profileCompleted", "==", true),
+          limit(3)
         );
 
         const snapshot = await getDocs(professionalsQuery);
@@ -67,7 +84,22 @@ export default function ProfessionalsSection() {
     };
 
     fetchProfessionals();
-  }, []);
+  }, [user]);
+
+  const handleViewProfile = useCallback(
+    (uid: string) => {
+      const profilePath = `/professional/${uid}`;
+
+      if (!user) {
+        setAuthRedirect(profilePath);
+        setIsAuthModalOpen(true);
+        return;
+      }
+
+      router.push(profilePath);
+    },
+    [user, router]
+  );
 
   const scroll = (direction: "left" | "right") => {
     if (!scrollRef.current) return;
@@ -150,22 +182,16 @@ export default function ProfessionalsSection() {
                 className="snap-start shrink-0 w-[280px] lg:w-auto"
               >
                 <ProfessionalCard
-                  name={
-                    professional.displayName ||
-                    "Professional"
-                  }
-                  role={
-                    professional.professionalType ||
-                    "Professional"
-                  }
+                  uid={professional.uid}
+                  name={professional.displayName || "Professional"}
+                  role={professional.professionalType || "Professional"}
                   city={professional.city || "—"}
                   experience={`${professional.experienceYears ?? 0} Years`}
                   avatar={professional.photoURL || ""}
                   premium={true}
-                  verified={
-                    professional.status === "approved"
-                  }
+                  verified={professional.status === "approved"}
                   index={index}
+                  onViewProfile={handleViewProfile}
                 />
               </div>
             ))}
@@ -202,6 +228,11 @@ export default function ProfessionalsSection() {
         </motion.div>
 
       </div>
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        redirectPath={authRedirect}
+      />
     </section>
   );
 }
