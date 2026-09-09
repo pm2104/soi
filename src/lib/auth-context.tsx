@@ -225,6 +225,7 @@ import {
 } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db, googleProvider } from "./firebase";
+import { useRouter } from "next/navigation";
 
 export interface ProfessionalProfile {
   uid: string;
@@ -270,6 +271,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -355,10 +357,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await signOut(auth);
       setProfile(null);
+      router.push("/");
     } catch (err) {
       console.error("Sign-out error:", err);
     }
-  }, []);
+  }, [router]);
 
   const clearAuthError = useCallback(() => {
     setAuthError(null);

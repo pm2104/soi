@@ -6,14 +6,16 @@ import { ProfessionalProfile } from "@/lib/auth-context";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import Image from "next/image";
-import Link from "next/link";
 
 interface ProfessionalCardProps {
   professional: ProfessionalProfile;
   onViewProfile: () => void;
 }
 
-export default function ProfessionalCard({ professional, onViewProfile }: ProfessionalCardProps) {
+export default function ProfessionalCard({
+  professional,
+  onViewProfile,
+}: ProfessionalCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -26,7 +28,7 @@ export default function ProfessionalCard({ professional, onViewProfile }: Profes
             {professional.photoURL ? (
               <Image
                 src={professional.photoURL}
-                alt={professional.displayName}
+                alt={professional.displayName || "Professional"}
                 fill
                 className="object-cover"
               />
@@ -36,12 +38,24 @@ export default function ProfessionalCard({ professional, onViewProfile }: Profes
               </div>
             )}
           </div>
+
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-bold text-navy truncate">{professional.displayName}</h3>
-              <Badge variant="accent" className="text-xs whitespace-nowrap">SOI Approved</Badge>
+              <h3 className="font-bold text-navy truncate">
+                {professional.displayName}
+              </h3>
+
+              <Badge
+                variant="accent"
+                className="text-xs whitespace-nowrap"
+              >
+                SOI Approved
+              </Badge>
             </div>
-            <p className="text-sm text-secondary-text">{professional.professionalType}</p>
+
+            <p className="text-sm text-secondary-text">
+              {professional.professionalType}
+            </p>
           </div>
         </div>
 
@@ -50,10 +64,12 @@ export default function ProfessionalCard({ professional, onViewProfile }: Profes
             <Award className="h-3.5 w-3.5" />
             {professional.specialization}
           </span>
+
           <span className="flex items-center gap-1">
             <MapPin className="h-3.5 w-3.5" />
             {professional.city}
           </span>
+
           <span className="flex items-center gap-1">
             <Calendar className="h-3.5 w-3.5" />
             {professional.experienceYears} Years
@@ -63,12 +79,16 @@ export default function ProfessionalCard({ professional, onViewProfile }: Profes
         <p className="text-sm text-secondary-text line-clamp-2 mb-4">
           {professional.bio || "No bio provided."}
         </p>
-      <Link href="/hire-professional">
-        <Button variant="secondary" fullWidth size="sm">
+
+        {/* View Profile */}
+        <Button
+          variant="secondary"
+          fullWidth
+          size="sm"
+          onClick={onViewProfile}
+        >
           View Profile
         </Button>
-      </Link>
-
       </div>
     </motion.div>
   );

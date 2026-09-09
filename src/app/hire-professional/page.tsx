@@ -4,10 +4,18 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Search, ArrowRight } from "lucide-react";
-import { collection, query, where, limit, getDocs } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  limit,
+  getDocs,
+} from "firebase/firestore";
+
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { ProfessionalProfile } from "@/lib/auth-context";
+
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ProfessionalCard from "@/components/marketplace/ProfessionalCard";
@@ -22,33 +30,54 @@ export default function HireProfessionalPage() {
   const { user } = useAuth();
   const router = useRouter();
 
-  const [professionals, setProfessionals] = useState<ProfessionalProfile[]>([]);
+  const [professionals, setProfessionals] = useState<
+    ProfessionalProfile[]
+  >([]);
+
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+
   const [filters, setFilters] = useState({
     professionalType: "",
     specialization: "",
     city: "",
     experience: "",
   });
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authRedirect, setAuthRedirect] = useState<string | undefined>(undefined);
 
-  // Fetch professionals
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authRedirect, setAuthRedirect] = useState<string | undefined>(
+    undefined
+  );
+
+  /*
+   * ---------------------------------------------------------
+   * FETCH PROFESSIONALS
+   * ---------------------------------------------------------
+   *
+   * Logged-out users:
+   *   → Only first 3 approved professionals are shown.
+   *
+   * Logged-in users:
+   *   → All approved professionals are shown.
+   */
   useEffect(() => {
     async function fetchProfessionals() {
       setLoading(true);
+
       try {
+        const professionalsRef = collection(db, "professionals");
+
         let q;
+
         if (user) {
           q = query(
-            collection(db, "professionals"),
+            professionalsRef,
             where("status", "==", "approved"),
             where("profileCompleted", "==", true)
           );
         } else {
           q = query(
-            collection(db, "professionals"),
+            professionalsRef,
             where("status", "==", "approved"),
             where("profileCompleted", "==", true),
             limit(3)
@@ -56,6 +85,7 @@ export default function HireProfessionalPage() {
         }
 
         const snapshot = await getDocs(q);
+
         const data = snapshot.docs.map((doc) => ({
           uid: doc.id,
           ...doc.data(),
@@ -72,12 +102,18 @@ export default function HireProfessionalPage() {
     fetchProfessionals();
   }, [user]);
 
-  // Filter logic
+  /*
+   * ---------------------------------------------------------
+   * FILTER PROFESSIONALS
+   * ---------------------------------------------------------
+   */
   const filteredProfessionals = useMemo(() => {
     let result = professionals;
 
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
+    // Search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+
       result = result.filter(
         (p) =>
           p.displayName?.toLowerCase().includes(q) ||
@@ -85,34 +121,49 @@ export default function HireProfessionalPage() {
           p.specialization?.toLowerCase().includes(q) ||
           p.city?.toLowerCase().includes(q) ||
           p.organization?.toLowerCase().includes(q) ||
-          p.areasOfExpertise?.some((a) => a.toLowerCase().includes(q))
+          p.areasOfExpertise?.some((area) =>
+            area.toLowerCase().includes(q)
+          )
       );
     }
 
+    // Professional type
     if (filters.professionalType) {
-      result = result.filter((p) => p.professionalType === filters.professionalType);
+      result = result.filter(
+        (p) => p.professionalType === filters.professionalType
+      );
     }
 
+    // Specialization
     if (filters.specialization) {
-      result = result.filter((p) => p.specialization === filters.specialization);
+      result = result.filter(
+        (p) => p.specialization === filters.specialization
+      );
     }
 
+    // City
     if (filters.city) {
       result = result.filter((p) => p.city === filters.city);
     }
 
+    // Experience
     if (filters.experience) {
       result = result.filter((p) => {
         const years = p.experienceYears || 0;
+
         switch (filters.experience) {
           case "0-2":
             return years >= 0 && years <= 2;
+
           case "3-5":
             return years >= 3 && years <= 5;
+
           case "6-10":
             return years >= 6 && years <= 10;
+
           case "10+":
             return years > 10;
+
           default:
             return true;
         }
@@ -122,27 +173,63 @@ export default function HireProfessionalPage() {
     return result;
   }, [professionals, searchQuery, filters]);
 
+  /*
+   * ---------------------------------------------------------
+   * VIEW MORE PROFESSIONALS
+   * ---------------------------------------------------------
+   *
+   * Logged-out user:
+   *   → Login first
+   *   → After Google login, return to /hire-professional
+   *
+   * Logged-in user:
+   *   → Already seeing all professionals
+   */
   const handleViewMore = useCallback(() => {
     if (!user) {
       setAuthRedirect("/hire-professional");
       setIsAuthModalOpen(true);
+      return;
     }
   }, [user]);
 
+  /*
+   * ---------------------------------------------------------
+   * VIEW PROFESSIONAL PROFILE
+   * ---------------------------------------------------------
+   *
+   * Logged-out:
+   *   → Save EXACT professional URL
+   *   → Open login modal
+   *   → Google login
+   *   → Redirect to that professional
+   *
+   * Logged-in:
+   *   → Go directly to professional profile
+   */
   const handleViewProfile = useCallback(
     (uid: string) => {
+      const profilePath = `/professional/${uid}`;
+
       if (!user) {
-        setAuthRedirect(`/professional/${uid}`);
+        setAuthRedirect(profilePath);
         setIsAuthModalOpen(true);
-      } else {
-        router.push(`/professional/${uid}`);
+        return;
       }
+
+      router.push(profilePath);
     },
     [user, router]
   );
 
+  /*
+   * ---------------------------------------------------------
+   * CLEAR FILTERS
+   * ---------------------------------------------------------
+   */
   const clearFilters = useCallback(() => {
     setSearchQuery("");
+
     setFilters({
       professionalType: "",
       specialization: "",
@@ -151,19 +238,33 @@ export default function HireProfessionalPage() {
     });
   }, []);
 
+  /*
+   * ---------------------------------------------------------
+   * CITIES FOR FILTER
+   * ---------------------------------------------------------
+   */
   const cities = useMemo(() => {
-    const allCities = professionals.map((p) => p.city).filter(Boolean);
+    const allCities = professionals
+      .map((p) => p.city)
+      .filter(Boolean);
+
     return Array.from(new Set(allCities)).sort();
   }, [professionals]);
 
   const hasActiveFilters =
     searchQuery || Object.values(filters).some(Boolean);
 
+  /*
+   * ---------------------------------------------------------
+   * RENDER
+   * ---------------------------------------------------------
+   */
   return (
     <>
       <Navbar />
+
       <main className="min-h-screen bg-background">
-        {/* Hero */}
+        {/* HERO */}
         <section className="bg-navy text-white py-16 md:py-24">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <motion.h1
@@ -173,23 +274,28 @@ export default function HireProfessionalPage() {
             >
               Find the Right Professional for Your Project
             </motion.h1>
+
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
               className="text-lg text-white/80 max-w-2xl mx-auto"
             >
-              SOI helps clients discover approved construction professionals. Browse verified profiles and connect with experts for your next project.
+              SOI helps clients discover approved construction
+              professionals. Browse verified profiles and connect with
+              experts for your next project.
             </motion.p>
           </div>
         </section>
 
-        {/* Search & Filters */}
+        {/* SEARCH & FILTERS */}
         <section className="sticky top-16 md:top-20 z-40 bg-white border-b border-border py-4">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row gap-3 items-center">
+              {/* SEARCH */}
               <div className="relative flex-1 w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary-text" />
+
                 <input
                   type="text"
                   placeholder="Search by name, expertise, specialization or city"
@@ -198,12 +304,26 @@ export default function HireProfessionalPage() {
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-light-gray focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
                 />
               </div>
+
+              {/* DESKTOP FILTER */}
               <div className="hidden md:block">
-                <FilterBar filters={filters} onChange={setFilters} cities={cities} />
+                <FilterBar
+                  filters={filters}
+                  onChange={setFilters}
+                  cities={cities}
+                />
               </div>
+
+              {/* MOBILE FILTER */}
               <div className="md:hidden w-full">
-                <MobileFilterDrawer filters={filters} onChange={setFilters} cities={cities} />
+                <MobileFilterDrawer
+                  filters={filters}
+                  onChange={setFilters}
+                  cities={cities}
+                />
               </div>
+
+              {/* CLEAR FILTERS */}
               {hasActiveFilters && (
                 <button
                   onClick={clearFilters}
@@ -216,12 +336,16 @@ export default function HireProfessionalPage() {
           </div>
         </section>
 
-        {/* Results */}
+        {/* RESULTS */}
         <section className="py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* LOGGED-IN HEADER */}
             {user && (
               <div className="mb-8">
-                <h2 className="text-2xl font-bold text-navy">Find a Professional</h2>
+                <h2 className="text-2xl font-bold text-navy">
+                  Find a Professional
+                </h2>
+
                 <p className="text-secondary-text">
                   {filteredProfessionals.length} approved professional
                   {filteredProfessionals.length !== 1 ? "s" : ""}
@@ -229,6 +353,7 @@ export default function HireProfessionalPage() {
               </div>
             )}
 
+            {/* LOADING */}
             {loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[1, 2, 3].map((i) => (
@@ -239,20 +364,28 @@ export default function HireProfessionalPage() {
               <EmptyState />
             ) : (
               <>
+                {/* PROFESSIONAL CARDS */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredProfessionals.map((professional) => (
                     <ProfessionalCard
                       key={professional.uid}
                       professional={professional}
-                      onViewProfile={() => handleViewProfile(professional.uid)}
+                      onViewProfile={() =>
+                        handleViewProfile(professional.uid)
+                      }
                     />
                   ))}
                 </div>
 
+                {/* VIEW MORE */}
                 {!user && professionals.length >= 3 && (
                   <div className="mt-12 text-center">
-                    <Button onClick={handleViewMore} size="lg">
+                    <Button
+                      onClick={handleViewMore}
+                      size="lg"
+                    >
                       View More Professionals
+
                       <ArrowRight className="h-5 w-5 ml-2" />
                     </Button>
                   </div>
@@ -262,7 +395,10 @@ export default function HireProfessionalPage() {
           </div>
         </section>
       </main>
+
       <Footer />
+
+      {/* AUTH MODAL */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}

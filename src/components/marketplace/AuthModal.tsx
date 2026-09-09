@@ -13,35 +13,52 @@ interface AuthModalProps {
   redirectPath?: string;
 }
 
-export default function AuthModal({ isOpen, onClose, redirectPath }: AuthModalProps) {
+export default function AuthModal({
+  isOpen,
+  onClose,
+  redirectPath,
+}: AuthModalProps) {
   const router = useRouter();
   const { user, signInWithGoogle, authLoading } = useAuth();
 
-  // Auto-close modal and redirect when auth succeeds
+  // Redirect after successful authentication
   useEffect(() => {
-    if (isOpen && user) {
-      const redirect = sessionStorage.getItem("auth_redirect");
-      sessionStorage.removeItem("auth_redirect");
+    if (!isOpen || !user) return;
 
-      if (redirect && redirect !== window.location.pathname) {
-        router.push(redirect);
-      } else {
-        onClose();
-      }
+    const redirect =
+      sessionStorage.getItem("auth_redirect") || redirectPath;
+
+    // Remove stored redirect so it cannot affect future logins
+    sessionStorage.removeItem("auth_redirect");
+
+    onClose();
+
+    if (redirect && redirect !== window.location.pathname) {
+      router.push(redirect);
     }
-  }, [user, isOpen, router, onClose]);
+  }, [user, isOpen, redirectPath, router, onClose]);
 
   const handleSignIn = useCallback(async () => {
-    if (redirectPath) {
-      sessionStorage.setItem("auth_redirect", redirectPath);
+    try {
+      // Save the exact page the user originally wanted to visit
+      if (redirectPath) {
+        sessionStorage.setItem("auth_redirect", redirectPath);
+      }
+
+      await signInWithGoogle();
+    } catch (error) {
+      console.error("Google sign-in failed:", error);
+
+      // Remove stale redirect if authentication fails
+      sessionStorage.removeItem("auth_redirect");
     }
-    await signInWithGoogle();
   }, [signInWithGoogle, redirectPath]);
 
   return (
     <AnimatePresence>
       {isOpen && (
         <>
+          {/* Background */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -49,6 +66,8 @@ export default function AuthModal({ isOpen, onClose, redirectPath }: AuthModalPr
             className="fixed inset-0 z-50 bg-navy/60 backdrop-blur-sm"
             onClick={onClose}
           />
+
+          {/* Modal */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -60,16 +79,21 @@ export default function AuthModal({ isOpen, onClose, redirectPath }: AuthModalPr
               <h2 className="text-xl font-bold text-navy">
                 Sign in to explore professionals
               </h2>
+
               <button
                 onClick={onClose}
                 className="p-2 rounded-lg hover:bg-light-gray transition-colors"
+                aria-label="Close"
               >
                 <X className="h-5 w-5 text-secondary-text" />
               </button>
             </div>
+
             <p className="text-secondary-text mb-6">
-              Sign in with Google to explore approved SOI professionals and connect with the right professional for your project.
+              Sign in with Google to explore approved SOI professionals and
+              connect with the right professional for your project.
             </p>
+
             <Button
               onClick={handleSignIn}
               isLoading={authLoading}

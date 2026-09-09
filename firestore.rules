@@ -1,28 +1,68 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
+
     match /professionals/{uid} {
-      // Anyone can read their own document
-      allow read: if request.auth != null && request.auth.uid == uid;
-      
-      // Can only create their own document
-      allow create: if request.auth != null 
+
+      // --------------------------------------------------
+      // READ
+      // --------------------------------------------------
+      // Only authenticated users can view professional profiles.
+      // They can view ONLY profiles that are approved.
+      //
+      // This allows a logged-in client to view:
+      // /professional/ABC123
+      // /professional/XYZ789
+      // etc.
+      //
+      allow read: if request.auth != null
+        && resource.data.status == "approved";
+
+
+      // --------------------------------------------------
+      // CREATE
+      // --------------------------------------------------
+      // A professional can create only their own profile.
+      // New profiles must start as "pending".
+      //
+      allow create: if request.auth != null
         && request.auth.uid == uid
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.status == "pending";
-      
-      // Can update their own document, but CANNOT change uid, status, or createdAt
-      allow update: if request.auth != null 
+
+
+      // --------------------------------------------------
+      // UPDATE
+      // --------------------------------------------------
+      // A professional can update only their own profile.
+      //
+      // They cannot change:
+      // - uid
+      // - status
+      // - createdAt
+      //
+      allow update: if request.auth != null
         && request.auth.uid == uid
         && request.resource.data.uid == resource.data.uid
         && request.resource.data.status == resource.data.status
         && request.resource.data.createdAt == resource.data.createdAt;
-      
-      // No one can delete
+
+
+      // --------------------------------------------------
+      // DELETE
+      // --------------------------------------------------
+      // Nobody can delete professional profiles.
+      //
       allow delete: if false;
     }
-    
-    // Deny everything else
+
+
+    // --------------------------------------------------
+    // EVERYTHING ELSE
+    // --------------------------------------------------
+    // Deny access to all other Firestore collections.
+    //
     match /{document=**} {
       allow read, write: if false;
     }

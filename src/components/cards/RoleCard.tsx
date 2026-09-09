@@ -2,6 +2,8 @@
 
 import { motion } from "framer-motion";
 import { Building2, HardHat, ArrowRight, Check } from "lucide-react";
+import { useRouter } from "next/navigation";
+
 import Button from "@/components/ui/Button";
 import JoinAsProfessionalButton from "@/components/auth/JoinAsProfessionalButton";
 import { cn } from "@/lib/utils";
@@ -24,8 +26,8 @@ const content = {
       "Secure payment protection",
     ],
     cta: "Hire Professionals",
-    ctaVariant: "primary" as const,
   },
+
   professional: {
     icon: HardHat,
     title: "Construction Professional",
@@ -38,13 +40,17 @@ const content = {
       "Build your reputation",
     ],
     cta: "Join as Professional",
-    ctaVariant: "secondary" as const,
   },
 };
 
 export default function RoleCard({ type, index }: RoleCardProps) {
   const data = content[type];
   const Icon = data.icon;
+  const router = useRouter();
+
+  const handleHireProfessionals = () => {
+    router.push("/hire-professional");
+  };
 
   return (
     <motion.div
@@ -66,12 +72,7 @@ export default function RoleCard({ type, index }: RoleCardProps) {
           type === "client" ? "bg-accent/20" : "bg-accent/10"
         )}
       >
-        <Icon
-          className={cn(
-            "h-8 w-8",
-            type === "client" ? "text-accent" : "text-accent"
-          )}
-        />
+        <Icon className="h-8 w-8 text-accent" />
       </div>
 
       <h3
@@ -82,6 +83,7 @@ export default function RoleCard({ type, index }: RoleCardProps) {
       >
         {data.title}
       </h3>
+
       <p
         className={cn(
           "text-base leading-relaxed mb-6",
@@ -102,6 +104,7 @@ export default function RoleCard({ type, index }: RoleCardProps) {
             >
               <Check className="h-3.5 w-3.5 text-accent" />
             </div>
+
             <span
               className={cn(
                 "text-sm",
@@ -115,8 +118,14 @@ export default function RoleCard({ type, index }: RoleCardProps) {
       </ul>
 
       {type === "client" ? (
-        <Button variant="primary" fullWidth className="group">
+        <Button
+          variant="primary"
+          fullWidth
+          className="group"
+          onClick={handleHireProfessionals}
+        >
           {data.cta}
+
           <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
         </Button>
       ) : (
