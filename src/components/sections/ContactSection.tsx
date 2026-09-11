@@ -189,9 +189,9 @@ export default function ContactSection() {
               title="Office Address"
               content={
                 <>
-                  123 Construction Hub, Sector 45
+                  New Delhi, India —
                   <br />
-                  New Delhi, India 110001
+                  serving all 28 states & UTs
                 </>
               }
             />
@@ -200,8 +200,8 @@ export default function ContactSection() {
             <ContactInfo
               icon={<WhatsAppIcon />}
               title="WhatsApp"
-              content="+91 98765 43210"
-              href="https://wa.me/919876543210?text=Hello%20SOI%2C%20I%20would%20like%20to%20know%20more%20about%20Supervisors%20of%20India."
+              content="+91 93159 02661"
+              href="https://wa.me/919315902661?text=Hello%20SOI%2C%20I%20would%20like%20to%20know%20more%20about%20Supervisors%20of%20India."
               external
             />
 

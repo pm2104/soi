@@ -4,8 +4,10 @@
 
 @layer base {
   html {
+    font-size: 15px;
     scroll-behavior: smooth;
   }
+
   body {
     @apply bg-background text-text font-manrope antialiased;
   }
@@ -15,9 +17,11 @@
   .text-balance {
     text-wrap: balance;
   }
+
   .glass {
     @apply bg-white/80 backdrop-blur-xl border border-white/20;
   }
+
   .glass-dark {
     @apply bg-navy/80 backdrop-blur-xl border border-white/10;
   }

@@ -75,7 +75,7 @@ export const MEMBERSHIP_TIERS = [
       "Browse all profiles",
       "Send unlimited inquiries",
       "Direct messaging",
-      "Contract assistance",
+      "Professional plans",
       "Priority matching",
       "Analytics dashboard",
       "API access",
@@ -99,7 +99,7 @@ export const HOW_IT_WORKS_STEPS = [
     step: 2,
     title: "Browse Professionals",
     description:
-      "Explore verified profiles across 20+ construction categories. Filter by location, experience, and ratings.",
+      "Explore verified profiles across 50+ construction categories. Filter by location, experience, and ratings.",
     icon: "Search",
   },
   {
@@ -182,16 +182,16 @@ export const FEATURES = [
     icon: "Gift",
   },
   {
-    title: "24/7 Support",
+    title: "Support When You Need",
     description:
-      "Our dedicated team is available round the clock to assist with any queries or disputes.",
+      "Our dedicated team is always available to assist you with any queries or disputes.",
     icon: "Headphones",
   },
 ];
 
 export const STATS = [
   { value: "Pan-India", label: "All 28 states & UTs covered from day one." },
-  { value: "20+ Professions", label: "Supervisors, Engineers, Architects, PMs & more." },
+  { value: "50+ Professions", label: "Supervisors, Engineers, Architects, PMs & more." },
   { value: "Verified Only", label: "Every profile reviewed before going live." },
 ];
 
